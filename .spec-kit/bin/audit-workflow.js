@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const { fs, path, root, read, safe, document, validateBundle } = require('./lib');
+const { fs, path, root, read, safe, document, validateBundle, git } = require('./lib');
 
 let failures = 0;
 const pass = message => console.log(`PASS  ${message}`);
@@ -62,10 +62,13 @@ try {
   check(fs.existsSync(safe('.spec-kit/node_modules/yaml')) && fs.existsSync(safe('.spec-kit/package-lock.json')), 'dependências locais estão instaladas e travadas');
   const active = fs.readdirSync(safe('specs/active'), { withFileTypes: true }).filter(e => e.isDirectory());
   check(active.length <= 1, 'há no máximo uma feature ativa');
+  let current = null;
   if (fs.existsSync(safe('.specify/feature.json'))) {
-    const current = JSON.parse(read('.specify/feature.json')).feature_directory;
+    current = JSON.parse(read('.specify/feature.json')).feature_directory;
     check(typeof current === 'string' && fs.existsSync(safe(current)), 'feature.json aponta para uma feature existente');
   } else pass('nenhuma feature selecionada (estado inicial válido)');
+  if (active.length === 1) check(current === `specs/active/${active[0].name}`, 'a única feature ativa também é o contexto selecionado');
+  if (active.length === 0) check(!git('status', '--porcelain', '--untracked-files=all', '--', 'src/', '.knowledge/'), 'estado ocioso não possui código ou Wiki pendentes');
   const lock = path.resolve(root, '.git/okf-auto-sync.lock');
   check(!fs.existsSync(lock), 'não existe trava residual de sincronização');
   try { require('node:child_process').execFileSync('git', ['rev-parse', '--verify', 'HEAD'], { cwd: root, stdio: 'ignore' }); }

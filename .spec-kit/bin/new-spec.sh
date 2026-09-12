@@ -16,4 +16,9 @@ for file in spec plan tasks; do
   sed "s/{{FEATURE}}/$1/g" "$templates/$file-template.md" > "$target/$file.md"
 done
 printf 'Spec criada: %s\n' "$target"
-node "$root/.spec-kit/bin/feature.js" select "specs/backlog/$1"
+active="$(find "$root/specs/active" -mindepth 1 -maxdepth 1 -type d -print -quit 2>/dev/null || true)"
+if [[ -n "$active" ]]; then
+  printf 'Feature ativa preservada no contexto; selecione esta spec depois de arquivá-la.\n'
+else
+  node "$root/.spec-kit/bin/feature.js" select "specs/backlog/$1"
+fi

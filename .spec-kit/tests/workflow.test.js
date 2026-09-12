@@ -80,6 +80,17 @@ test('stage e activate preservam contexto e base original', t => {
   assert.equal(JSON.parse(f.read('.specify/feature.json')).feature_directory, 'specs/active/sample');
 });
 
+test('nova spec no backlog não substitui o contexto de uma feature ativa', t => {
+  const f = fixture(t); setup(f);
+  ok(f.run('new-spec.sh', 'next'));
+  assert.ok(fs.existsSync(path.join(f.root, 'specs/backlog/next/spec.md')));
+  assert.equal(JSON.parse(f.read('.specify/feature.json')).feature_directory, 'specs/active/sample');
+  f.meta('specs/002-later/spec.md', { status: 'draft' });
+  ok(f.run('feature.js', 'stage', 'specs/002-later'));
+  assert.ok(fs.existsSync(path.join(f.root, 'specs/backlog/002-later/spec.md')));
+  assert.equal(JSON.parse(f.read('.specify/feature.json')).feature_directory, 'specs/active/sample');
+});
+
 test('ativação bloqueia Wiki suja, mapeamento inválido e outra feature ativa', t => {
   const f = fixture(t); f.git('add', '.'); f.git('commit', '-qm', 'chore: scaffold');
   ok(f.run('new-spec.sh', 'one'));

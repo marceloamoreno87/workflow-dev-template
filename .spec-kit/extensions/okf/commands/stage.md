@@ -3,6 +3,6 @@ description: Colocar a spec recém-criada no backlog sem perder o contexto do Sp
 ---
 
 Execute `node .spec-kit/bin/feature.js stage`. O comando lê a feature atual,
-move a pasta para `specs/backlog/` e atualiza `.specify/feature.json`.
-Não substitua o contexto manualmente pelo caminho anterior. Informe o caminho
-retornado ao concluir a etapa specify. A criação não significa aprovação.
+move a pasta para `specs/backlog/` e atualiza `.specify/feature.json`. Se já
+existir uma feature ativa, ela permanece como contexto; a nova spec apenas fica
+na fila. Informe o caminho retornado ao concluir. A criação não significa aprovação.

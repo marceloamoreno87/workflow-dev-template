@@ -315,6 +315,8 @@ com escopo incerto seguem o fluxo completo.
 
 - Mantenha uma feature ativa por contexto. Para trocar, use
   `node .spec-kit/bin/feature.js select specs/<estado>/<nome>`.
+- Você pode enfileirar specs no backlog; enquanto houver uma feature ativa, o
+  ponteiro operacional permanece nela.
 - Escreva specs com comportamento observável e valor para o usuário.
 - Aprove a spec antes de decidir tecnologia.
 - Use clarify para escolhas que mudam escopo, segurança ou experiência.

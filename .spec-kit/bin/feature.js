@@ -67,7 +67,13 @@ try {
     }
   }
   if (action === 'activate') setMetadata(`${target}/spec.md`, meta);
-  write('.specify/feature.json', JSON.stringify({ feature_directory: target }, null, 2) + '\n');
+  let selected = target;
+  if (action === 'stage') {
+    const active = fs.readdirSync(safe('specs/active'), { withFileTypes: true }).filter(e => e.isDirectory());
+    if (active.length > 1) throw Error('Há múltiplas features ativas; corrija o estado antes de continuar.');
+    if (active.length === 1) selected = `specs/active/${active[0].name}`;
+  }
+  write('.specify/feature.json', JSON.stringify({ feature_directory: selected }, null, 2) + '\n');
   if (action === 'archive') {
     const trackedOld = git('ls-files', '--', dir);
     const commitPaths = trackedOld ? [dir, target] : [target];
@@ -77,5 +83,5 @@ try {
       catch { throw Error(`Feature movida para ${target}, mas o commit de arquivo falhou. Corrija o Git e execute archive novamente.`); }
     }
   }
-  console.log(JSON.stringify({ FEATURE_DIR: safe(target), feature_directory: target }));
+  console.log(JSON.stringify({ FEATURE_DIR: safe(target), feature_directory: selected }));
 } catch (e) { console.error(e.message); process.exitCode = 1; }

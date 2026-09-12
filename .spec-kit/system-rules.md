@@ -21,6 +21,7 @@ e `.agents/skills/`. `.spec-kit/` contém a extensão local OKF e seus utilitár
    selecionar specs, mantendo esse contexto. Não se baseie apenas na branch Git.
 7. Mantenha exatamente uma feature em `specs/active/`. A ativação exige `src/`
    e `.knowledge/` limpos para que a base delimite o ciclo sem contaminação.
+   Novas specs podem entrar no backlog, mas não substituem o contexto ativo.
 8. Antes do sync, registre em `spec.md` comandos e resultados estruturados para
    testes, cobertura, lint e tipos. Cobertura deve atingir o mínimo do manifesto.
 
