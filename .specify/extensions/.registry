@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "okf": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:ed9e97286bc1231312e7f33de60ec6bae4d1464cd611e803c557738a8a09b6ca",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "codex": [
+          "speckit.okf.context",
+          "speckit.okf.stage",
+          "speckit.okf.activate",
+          "speckit.okf.sync",
+          "speckit.okf.archive"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-09-12T22:28:03.469115+00:00"
+    }
+  }
+}

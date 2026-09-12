@@ -1,0 +1,47 @@
+schema_version: "1.0"
+extension:
+  id: okf
+  name: "LLM Wiki OKF"
+  version: "1.0.0"
+  description: "Contexto OKF v0.2, ciclo de specs e sincronização semântica pelo Codex."
+requires:
+  speckit_version: ">=1.0.6,<2.0.0"
+provides:
+  commands:
+    - name: speckit.okf.context
+      file: commands/context.md
+      description: "Consultar a Wiki e preparar o contexto da etapa atual."
+    - name: speckit.okf.stage
+      file: commands/stage.md
+      description: "Organizar a spec gerada em backlog e manter o contexto oficial."
+    - name: speckit.okf.activate
+      file: commands/activate.md
+      description: "Ativar spec aprovada, com plano e tarefas prontos."
+    - name: speckit.okf.sync
+      file: commands/sync.md
+      description: "Revisar a diff da feature e atualizar semanticamente a Wiki OKF."
+    - name: speckit.okf.archive
+      file: commands/archive.md
+      description: "Arquivar a feature validada e sincronizada, preservando contexto."
+hooks:
+  before_specify:
+    command: speckit.okf.context
+    optional: false
+  after_specify:
+    command: speckit.okf.stage
+    optional: false
+  before_plan:
+    command: speckit.okf.context
+    optional: false
+  before_tasks:
+    command: speckit.okf.context
+    optional: false
+  after_tasks:
+    command: speckit.okf.activate
+    optional: false
+  before_implement:
+    command: speckit.okf.activate
+    optional: false
+  after_implement:
+    command: speckit.okf.sync
+    optional: false

@@ -1,0 +1,68 @@
+installed:
+- okf
+settings:
+  auto_execute_hooks: true
+hooks:
+  before_specify:
+  - extension: okf
+    command: speckit.okf.context
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.context?
+    description: ''
+    condition: null
+  after_specify:
+  - extension: okf
+    command: speckit.okf.stage
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.stage?
+    description: ''
+    condition: null
+  before_plan:
+  - extension: okf
+    command: speckit.okf.context
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.context?
+    description: ''
+    condition: null
+  before_tasks:
+  - extension: okf
+    command: speckit.okf.context
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.context?
+    description: ''
+    condition: null
+  after_tasks:
+  - extension: okf
+    command: speckit.okf.activate
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.activate?
+    description: ''
+    condition: null
+  before_implement:
+  - extension: okf
+    command: speckit.okf.activate
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.activate?
+    description: ''
+    condition: null
+  after_implement:
+  - extension: okf
+    command: speckit.okf.sync
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.sync?
+    description: ''
+    condition: null
