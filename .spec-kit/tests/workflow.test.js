@@ -87,11 +87,16 @@ test('ativação bloqueia Wiki suja, mapeamento inválido e outra feature ativa'
   f.meta('specs/backlog/one/plan.md', [{ id: 'one', path: 'domains/one.md', depends_on: [], source_paths: ['src/*'] }], 'domains');
   f.write('specs/backlog/one/tasks.md', `- [ ] T001 Teste\n- [ ] T002 ${wikiTask}\n`);
   assert.notEqual(f.run('feature.js', 'activate').status, 0);
+  f.meta('specs/backlog/one/plan.md', [{ id: 'one', path: 'domains/one.md', depends_on: ['missing'], source_paths: ['src/'] }], 'domains');
+  assert.notEqual(f.run('feature.js', 'activate').status, 0);
   f.meta('specs/backlog/one/plan.md', [{ id: 'one', path: 'domains/one.md', depends_on: [], source_paths: ['src/'] }], 'domains');
   f.write('.knowledge/index.md', f.read('.knowledge/index.md') + '\nlocal\n');
   assert.notEqual(f.run('feature.js', 'activate').status, 0);
   f.write('.knowledge/index.md', f.git('show', 'HEAD:.knowledge/index.md') + '\n');
   ok(f.run('feature.js', 'activate'));
+  f.write('.knowledge/index.md', f.read('.knowledge/index.md') + '\nlocal\n');
+  assert.notEqual(f.run('feature.js', 'activate').status, 0);
+  f.write('.knowledge/index.md', f.git('show', 'HEAD:.knowledge/index.md') + '\n');
   f.write('specs/backlog/two/spec.md', '<!-- spec-kit:metadata -->\n```json\n{"status":"approved","approved_by":"human:test","base_commit":null}\n```\n');
   f.meta('specs/backlog/two/plan.md', [{ id: 'two', path: 'domains/two.md', depends_on: [], source_paths: ['src/'] }], 'domains');
   f.write('specs/backlog/two/tasks.md', `- [ ] T001 Teste\n- [ ] T002 ${wikiTask}\n`);

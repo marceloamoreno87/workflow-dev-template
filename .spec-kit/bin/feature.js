@@ -14,13 +14,22 @@ try {
     if (dir.startsWith('specs/archive/')) throw Error('Feature arquivada; crie novo ciclo.');
     if (!['approved', 'completed'].includes(meta.status) || !/^human:[^\s]+$/.test(meta.approved_by || '')) throw Error('Spec precisa de aprovação explícita registrada como human:<id>.');
     const domains = metadata(`${dir}/plan.md`, 'domains');
+    const manifest = validateBundle();
     if (!Array.isArray(domains) || !domains.length) throw Error('Preencha os domínios OKF no plano.');
+    const existingIds = new Map(manifest.domains.map(d => [d.id, d.path]));
+    const existingPaths = new Map(manifest.domains.map(d => [d.path, d.id]));
+    const mappedIds = new Set(); const mappedPaths = new Set();
     for (const d of domains) {
       if (!d || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(d.id || '') || !/^domains\/[a-z0-9/-]+\.md$/.test(d.path || '') ||
           !Array.isArray(d.depends_on) || !Array.isArray(d.source_paths) || !d.source_paths.length ||
           d.source_paths.some(p => typeof p !== 'string' || !p.startsWith('src/') || /[*?]/.test(p))) throw Error(`Mapeamento OKF inválido no plano: ${d?.id || 'sem id'}.`);
+      if (mappedIds.has(d.id) || mappedPaths.has(d.path) || (existingIds.has(d.id) && existingIds.get(d.id) !== d.path) ||
+          (existingPaths.has(d.path) && existingPaths.get(d.path) !== d.id)) throw Error(`ID/caminho OKF duplicado ou incompatível: ${d.id}.`);
+      mappedIds.add(d.id); mappedPaths.add(d.path);
       safe(`.knowledge/${d.path}`); for (const p of d.source_paths) safe(p);
     }
+    const availableIds = new Set([...existingIds.keys(), ...mappedIds]);
+    for (const d of domains) if (d.depends_on.some(dep => dep === d.id || !availableIds.has(dep))) throw Error(`Dependência OKF inválida no plano: ${d.id}.`);
     tasks(dir);
     target = `specs/active/${path.basename(dir)}`;
     const otherActive = fs.readdirSync(safe('specs/active'), { withFileTypes: true })
@@ -29,8 +38,8 @@ try {
     if (!Object.hasOwn(meta, 'base_commit') || meta.base_commit === null) {
       if (git('status', '--porcelain', '--untracked-files=all', '--', 'src/').split('\n').some(l => l && !l.endsWith('.gitkeep'))) throw Error('Commit das alterações anteriores em src/ necessário antes de ativar.');
       meta.base_commit = head() || 'EMPTY';
-      if (git('status', '--porcelain', '--untracked-files=all', '--', '.knowledge/')) throw Error('A Wiki precisa estar limpa antes de ativar a feature.');
     }
+    if (git('status', '--porcelain', '--untracked-files=all', '--', '.knowledge/')) throw Error('A Wiki precisa estar limpa antes de ativar ou retomar a feature.');
   }
   if (action === 'archive') {
     validateBundle();
