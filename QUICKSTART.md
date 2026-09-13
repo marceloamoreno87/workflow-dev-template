@@ -3,6 +3,39 @@
 Abra uma nova sessão do Codex na raiz do projeto e digite `$` para localizar as
 skills. Trabalhe em uma feature por vez e não altere `src/` antes da ativação.
 
+## Escolha o ponto de partida
+
+### Projeto novo
+
+Use a constituição existente ou revise seus princípios:
+
+```text
+$speckit-constitution
+```
+
+Na primeira feature, informe objetivos, atores, restrições e escala conhecida.
+O `$speckit-plan` definirá a stack mínima, a estrutura inicial e os comandos de
+qualidade. Não desenhe antecipadamente domínios que ainda não são necessários.
+
+### Projeto existente
+
+Antes da primeira spec, peça ao Codex uma descoberta do domínio que será
+alterado. Confirme:
+
+- stack e estrutura existentes;
+- módulos, dados, contratos e integrações afetados;
+- comandos reais de testes, cobertura, lint e tipos;
+- comportamento protegido por testes e comportamento apenas observado;
+- documentação desatualizada, hipóteses e riscos conhecidos.
+
+Registre somente conhecimento sustentado por fontes na Wiki. Se o módulo não
+tiver proteção adequada, inclua testes de caracterização antes de alterar o
+comportamento. Não é necessário mapear todo o legado: faça a baseline
+incrementalmente, por domínio afetado.
+
+O sync final documenta a diff da feature; ele não descobre sozinho todo o código
+preexistente.
+
 ## Fluxo recomendado
 
 1. Especifique:
@@ -72,3 +105,5 @@ specify extension list
 ```
 
 Veja pastas, todas as skills, etapas e recuperação no [README completo](README.md).
+Há também um exemplo de ponta a ponta no
+[fluxo avançado](ADVANCED-WORKFLOW.md).

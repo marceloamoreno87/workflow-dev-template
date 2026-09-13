@@ -5,6 +5,7 @@ especificações. O Codex executa o fluxo por skills locais, enquanto a extensã
 OKF consulta e atualiza a Wiki de conhecimento junto com cada feature.
 
 Para começar sem ler todo este guia, consulte o [guia rápido](QUICKSTART.md).
+Para um exemplo completo, consulte o [fluxo avançado](ADVANCED-WORKFLOW.md).
 
 ## Visão geral
 
@@ -19,6 +20,69 @@ Para começar sem ler todo este guia, consulte o [guia rápido](QUICKSTART.md).
 necessidade → spec → aprovação → plano → tarefas → implementação TDD
             → revisão da Wiki → convergência → arquivo
 ```
+
+## Adoção por tipo de projeto
+
+O workflow atende projetos novos e projetos existentes. Depois da preparação
+inicial, ambos seguem o mesmo ciclo por feature. O que muda é a forma de criar
+uma baseline confiável antes da primeira implementação.
+
+| Aspecto | Projeto novo | Projeto existente |
+| --- | --- | --- |
+| Wiki inicial | Nasce com os primeiros domínios | Começa com o contexto do legado efetivamente verificado |
+| Stack | Definida no primeiro plano | Registrada a partir do repositório e da operação reais |
+| Arquitetura | Evolui a partir da solução mínima | É descoberta antes de ser modificada |
+| Testes | TDD desde o primeiro comportamento | Caracterização do legado seguida de TDD para a mudança |
+| Maior risco | Projetar antecipadamente | Tratar documentação ou hipótese como comportamento real |
+
+### Projeto novo, do zero
+
+1. Revise a constituição com `$speckit-constitution` se os princípios existentes
+   não representarem o novo produto.
+2. Descreva objetivos, atores, fluxo principal, restrições e escala conhecida na
+   primeira `$speckit-specify`.
+3. Use `$speckit-clarify` para decisões que alterem arquitetura ou escopo.
+4. Após aprovação, use `$speckit-plan` para definir a menor stack e estrutura que
+   atendam aos requisitos, bem como comandos reais de testes, cobertura, lint e
+   tipos.
+5. Registre os primeiros domínios, contratos e decisões na Wiki por meio do ciclo
+   normal de implementação e sync.
+
+Não preencha antecipadamente toda a arquitetura. A Wiki e o manifesto devem
+crescer conforme decisões comprovadas por features reais.
+
+### Projeto existente, em andamento
+
+Antes da primeira feature, faça uma descoberta dirigida ao domínio que será
+alterado. Não é necessário documentar todo o legado de uma vez.
+
+1. Confirme a stack, a estrutura do repositório e os comandos reais de qualidade.
+2. Identifique os módulos, contratos, integrações, dados e procedimentos
+   operacionais afetados pela próxima mudança.
+3. Classifique cada informação como confirmada por teste, observada no código,
+   proveniente de documentação ou ainda hipotética.
+4. Registre no manifesto e nos conceitos OKF somente conhecimento sustentado por
+   fontes. Use `verified` apenas quando houver verificação comprovável e avalie
+   `status`, `stale_after` e `sources`.
+5. Quando faltar proteção automatizada, inclua testes de caracterização no plano
+   e nas tarefas antes de mudar o comportamento existente.
+6. Crie a primeira spec da mudança; daí em diante, siga o ciclo comum.
+
+O `$speckit-okf-sync` revisa a diff da feature a partir do `base_commit`. Ele não
+reconstrói automaticamente todo o histórico ou toda a arquitetura preexistente.
+Conhecimento fora do domínio afetado deve ser incorporado em ciclos posteriores,
+quando for consultado e verificado.
+
+### Ciclo comum após a adoção
+
+```text
+specify → clarify → aprovação → plan → tasks → analyze
+        → implement → converge → sync → archive
+```
+
+Em ambos os cenários, nenhuma alteração em `src/` ocorre antes de uma spec
+aprovada, plano, tarefas e ativação. A primeira ativação também exige `src/` e
+`.knowledge/` limpos para registrar uma base não contaminada.
 
 ## Pré-requisitos e verificação
 
@@ -375,6 +439,7 @@ Recuperação de sync:
 ## Referências
 
 - [Guia rápido](QUICKSTART.md)
+- [Fluxo avançado e exemplo complexo](ADVANCED-WORKFLOW.md)
 - [Regras do agente](.spec-kit/system-rules.md)
 - [Constituição](.specify/memory/constitution.md)
 - [Índice da Wiki](.knowledge/index.md)

@@ -17,6 +17,20 @@ Abra uma nova sessão na raiz do projeto. Digite `$` para ver as skills.
 5. `$speckit-converge` — verifica aderência; repita implementação se houver tarefas.
 6. `$speckit-okf-archive` — valida conclusão/Wiki e arquiva.
 
+## Projeto novo e projeto existente
+
+O ciclo acima atende ambos. Em projeto novo, a primeira spec e seu plano definem
+a stack mínima, a estrutura e os primeiros domínios a partir dos requisitos. Em
+projeto existente, faça antes uma descoberta dirigida ao domínio afetado:
+confirme stack, caminhos, contratos, integrações e comandos de qualidade; se não
+houver proteção suficiente, inclua testes de caracterização nas tarefas.
+
+Não é necessário mapear todo o legado antes da primeira feature. Registre na
+Wiki somente conhecimento sustentado por código, testes, documentação confiável
+ou outra fonte explícita, avaliando `status`, `verified`, `stale_after` e
+`sources`. O sync cobre a diff desde o `base_commit`; ele não reconstrói
+automaticamente toda a arquitetura anterior.
+
 A constituição já está preenchida. `$speckit-clarify` e `$speckit-analyze` são
 opcionais. `$speckit-okf-sync` retoma uma sincronização pendente. Não use os
 antigos `/specify`, `/plan`, `/tasks`: não são os comandos desta integração.
