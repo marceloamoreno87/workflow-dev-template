@@ -4,7 +4,8 @@ description: Arquivar a feature concluída e manter o contexto oficial do Spec K
 
 Leia `.spec-kit/system-rules.md` e a feature atual. Verifique aprovação,
 evidências de testes/lint/tipos e que todos os itens de tasks.md estão concluídos.
-Execute __SPECKIT_COMMAND_CONVERGE__ antes de arquivar. Se houver trabalho
+Confirme um convergence.json válido; se ausente ou obsoleto, execute
+__SPECKIT_COMMAND_CONVERGE__ antes de arquivar. Se houver trabalho
 restante, mantenha active e informe as tarefas; não declare convergência.
 
 Se houver mudanças de código ou conhecimento ainda não sincronizadas, execute

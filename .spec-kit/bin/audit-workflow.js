@@ -34,15 +34,19 @@ try {
 
   const extension = document(read('.specify/extensions.yml')).toJS();
   check(extension.installed?.includes('okf') && extension.settings?.auto_execute_hooks === true, 'extensão OKF instalada com hooks automáticos');
-  const requiredHooks = ['before_specify', 'after_specify', 'before_plan', 'before_tasks', 'after_tasks', 'before_implement', 'after_implement'];
-  check(requiredHooks.every(name => Array.isArray(extension.hooks?.[name]) && extension.hooks[name].some(h => h.extension === 'okf' && h.enabled === true && h.optional === false)), 'todos os sete hooks OKF são obrigatórios e estão habilitados');
+  const requiredHooks = { before_specify: 'context', after_specify: 'stage', before_plan: 'context',
+    before_tasks: 'context', after_tasks: 'activate', before_implement: 'activate',
+    after_implement: 'verify', before_converge: 'context', after_converge: 'converged' };
+  check(Object.entries(requiredHooks).every(([name, command]) => Array.isArray(extension.hooks?.[name]) &&
+    extension.hooks[name].some(h => h.extension === 'okf' && h.command === `speckit.okf.${command}` &&
+      h.enabled === true && h.optional === false && !h.condition)), 'todos os nove hooks OKF estão habilitados com comandos corretos e sem condição');
   check(sameTrees('.spec-kit/extensions/okf', '.specify/extensions/okf'), 'fonte e instalação da extensão OKF são idênticas');
 
   const templates = ['spec', 'plan', 'tasks'];
   check(templates.every(name => read(`.spec-kit/templates/${name}-template.md`) === read(`.specify/templates/overrides/${name}-template.md`)), 'templates-fonte e overrides canônicos são idênticos');
 
   const requiredSkills = ['constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'converge', 'checklist', 'taskstoissues',
-    'okf-context', 'okf-stage', 'okf-activate', 'okf-sync', 'okf-archive'].map(name => `speckit-${name}`);
+    'okf-context', 'okf-stage', 'okf-activate', 'okf-sync', 'okf-archive', 'okf-verify', 'okf-converged'].map(name => `speckit-${name}`);
   let skillsValid = true;
   for (const name of requiredSkills) {
     const file = `.agents/skills/${name}/SKILL.md`;
@@ -52,9 +56,9 @@ try {
     const data = document(match[1]).toJS();
     if (data.name !== name || typeof data.description !== 'string' || !data.description.trim()) skillsValid = false;
   }
-  check(skillsValid, '15 skills possuem manifesto e nomes válidos');
+  check(skillsValid, '17 skills possuem manifesto e nomes válidos');
 
-  const scripts = ['new-spec.sh', 'fast-track.sh', 'feature.js', 'auto-sync-wiki.js', 'validate-okf.js', 'audit-workflow.js', 'install-hooks.sh'];
+  const scripts = ['new-spec.sh', 'fast-track.sh', 'feature.js', 'convergence.js', 'auto-sync-wiki.js', 'validate-okf.js', 'audit-workflow.js', 'install-hooks.sh'];
   check(scripts.every(name => executable(`.spec-kit/bin/${name}`)) && executable('.spec-kit/hooks/post-commit'), 'scripts e hook-fonte são executáveis');
   const installedHook = path.resolve(root, '.git/hooks/post-commit');
   check(fs.existsSync(installedHook) && (fs.statSync(installedHook).mode & 0o111) !== 0 && fs.readFileSync(installedHook, 'utf8') === read('.spec-kit/hooks/post-commit'), 'post-commit instalado e atualizado');
@@ -68,7 +72,10 @@ try {
     check(typeof current === 'string' && fs.existsSync(safe(current)), 'feature.json aponta para uma feature existente');
   } else pass('nenhuma feature selecionada (estado inicial válido)');
   if (active.length === 1) check(current === `specs/active/${active[0].name}`, 'a única feature ativa também é o contexto selecionado');
-  if (active.length === 0) check(!git('status', '--porcelain', '--untracked-files=all', '--', 'src/', '.knowledge/'), 'estado ocioso não possui código ou Wiki pendentes');
+  if (active.length === 0) {
+    check(!git('status', '--porcelain', '--untracked-files=all', '--', 'src/'), 'estado ocioso não possui código pendente');
+    if (git('status', '--porcelain', '--untracked-files=all', '--', '.knowledge/')) warn('Wiki possui edição local; revise e comite antes de ativar uma feature');
+  }
   const lock = path.resolve(root, '.git/okf-auto-sync.lock');
   check(!fs.existsSync(lock), 'não existe trava residual de sincronização');
   try { require('node:child_process').execFileSync('git', ['rev-parse', '--verify', 'HEAD'], { cwd: root, stdio: 'ignore' }); }

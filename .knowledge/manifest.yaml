@@ -1,12 +1,12 @@
 # Extensão local de descoberta; o formato normativo OKF está em index.md.
 okf_version: "0.2"
 system:
-  name: "workflow-dev"
-  version: "0.1.0"
+  name: "[PROJECT_NAME]"
+  version: "0.0.0"
   stack:
     application: "a definir na primeira spec"
     tooling: ["Git", "Bash", "Node.js >= 18", "Specify CLI 1.0.6", "Codex skills"]
-knowledge_version: "0.1.0"
+knowledge_version: "0.0.0"
 last_synced_commit: null
 # Lista YAML de domínios (vazia até a primeira feature da aplicação).
 # Campos: id, path (relativo ao bundle), depends_on, source_paths.

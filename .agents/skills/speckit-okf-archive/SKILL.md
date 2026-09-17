@@ -9,7 +9,8 @@ metadata:
 
 Leia `.spec-kit/system-rules.md` e a feature atual. Verifique aprovação,
 evidências de testes/lint/tipos e que todos os itens de tasks.md estão concluídos.
-Execute $speckit-converge antes de arquivar. Se houver trabalho
+Confirme um convergence.json válido; se ausente ou obsoleto, execute
+$speckit-converge antes de arquivar. Se houver trabalho
 restante, mantenha active e informe as tarefas; não declare convergência.
 
 Se houver mudanças de código ou conhecimento ainda não sincronizadas, execute

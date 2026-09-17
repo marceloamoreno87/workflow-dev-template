@@ -7,7 +7,7 @@ const YAML = require('yaml');
 const { execFileSync, spawnSync } = require('node:child_process');
 const source = path.resolve(__dirname, '../..');
 const wikiTask = 'Atualizar a LLM Wiki em .knowledge/ com as mudanças realizadas neste ciclo';
-const quality = { tests: { command: 'node --test', passed: true }, coverage: { command: 'node --test --experimental-test-coverage', percent: 90, passed: true }, lint: { command: 'npm run lint', passed: true }, types: { command: 'npm run typecheck', passed: true } };
+const quality = { tests: { command: 'node --test', passed: true }, coverage: { command: 'node --test --experimental-test-coverage', percent: 90, passed: true }, lint: { command: 'npm run lint', passed: true }, types: { command: 'npm run typecheck', passed: true }, build: { command: 'npm run build', passed: true }, acceptance: { command: 'npm run test:acceptance', passed: true } };
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'okf-test-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -18,11 +18,41 @@ function fixture(t) {
   const read = file => fs.readFileSync(path.join(root, file), 'utf8');
   const write = (file, text) => { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), text); };
   write('.gitignore', '.spec-kit/node_modules/\n');
-  const run = (file, ...args) => spawnSync(file.endsWith('.js') ? process.execPath : 'bash', [path.join(root, '.spec-kit/bin', file), ...args], { cwd: root, encoding: 'utf8' });
+  const run = (file, ...args) => {
+    const result = spawnSync(file.endsWith('.js') ? process.execPath : 'bash', [path.join(root, '.spec-kit/bin', file), ...args], { cwd: root, encoding: 'utf8' });
+    assert.ifError(result.error);
+    return result;
+  };
   const meta = (file, data, kind = 'metadata') => write(file, `<!-- spec-kit:${kind} -->\n\x60\x60\x60json\n${JSON.stringify(data)}\n\x60\x60\x60\n`);
   return { root, git, read, write, run, meta };
 }
 function ok(result) { assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`); return result.stdout; }
+
+test('template limpo passa sem depender de hooks ou instalação Git', t => {
+  const f = fixture(t);
+  ok(f.run('audit-template.js'));
+});
+
+for (const artifact of ['specs/backlog/example/spec.md', '.knowledge/architecture/example.md', '.specify/feature.json', 'src/example.js', 'WORKFLOW-REVIEW.md']) {
+  test(`auditoria do template rejeita ${artifact}`, t => {
+    const f = fixture(t);
+    f.write(artifact, 'conteúdo gerado\n');
+    const result = f.run('audit-template.js');
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, new RegExp(artifact.replaceAll('.', '\\.')));
+  });
+}
+
+test('auditoria do template rejeita constituição preenchida e manifesto sincronizado', t => {
+  const f = fixture(t);
+  f.write('.specify/memory/constitution.md', '# Constituição ratificada\n');
+  assert.notEqual(f.run('audit-template.js').status, 0);
+  f.write('.specify/memory/constitution.md', f.read('.specify/templates/constitution-template.md'));
+  f.write('.knowledge/manifest.yaml', f.read('.knowledge/manifest.yaml').replace('last_synced_commit: null', `last_synced_commit: "${'a'.repeat(40)}"`));
+  const result = f.run('audit-template.js');
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /last_synced_commit/);
+});
 function setup(f) {
   f.git('add', '.'); f.git('commit', '-qm', 'chore: scaffold');
   ok(f.run('new-spec.sh', 'sample'));
@@ -40,7 +70,12 @@ function implementation(f) {
   f.write('specs/active/sample/tasks.md', `- [x] T001 [US1] Testes e implementação\n- [ ] T002 ${wikiTask}\n`);
   return { base, commit };
 }
+function converge(f) {
+  f.write('specs/active/sample/convergence-report.md', '# Converged\nRF-001: src/sample.js retorna 42; código, tarefas e testes revisados.\n');
+  ok(f.run('convergence.js', '--reviewed-by', 'codex/test'));
+}
 function review(f) {
+  converge(f);
   f.write('.knowledge/domains/sample.md', '---\ntype: Domain\ntitle: Sample\nstatus: draft\ncustom_field: keep\nsources:\n  - resource: https://example.invalid/design\n---\n# Sample\n\nRetorna 42; contrato revisado a partir do código.\n');
   ok(f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test'));
 }
@@ -49,6 +84,8 @@ test('integração oficial, skills e hooks OKF estão registrados', () => {
   const config = JSON.parse(fs.readFileSync(path.join(source, '.specify/integration.json')));
   assert.ok(config.installed_integrations.includes('codex'));
   const hooks = YAML.parse(fs.readFileSync(path.join(source, '.specify/extensions.yml'), 'utf8'));
+  assert.deepEqual(hooks.hooks.after_implement.map(h => h.command), ['speckit.okf.verify']);
+  assert.deepEqual(hooks.hooks.after_converge.map(h => h.command), ['speckit.okf.converged']);
   for (const hook of Object.values(hooks.hooks).flat()) {
     assert.equal(hook.optional, false);
     const skill = path.join(source, '.agents/skills', hook.command.replaceAll('.', '-'), 'SKILL.md');
@@ -153,12 +190,16 @@ test('sync exige evidências estruturadas e revisão real de todo domínio afeta
   f.meta('specs/active/sample/spec.md', { status: 'completed', approved_by: 'human:test', base_commit: base, implementation_commit: commit, tests_passed: true });
   assert.notEqual(f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test').status, 0);
   f.meta('specs/active/sample/spec.md', { status: 'completed', approved_by: 'human:test', base_commit: base, implementation_commit: commit, tests_passed: true, quality });
-  assert.notEqual(f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test').status, 0);
+  converge(f);
+  const result = f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test');
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /revisão semântica/);
 });
 
 test('alteração semântica remove verified obsoleto', t => {
   const f = fixture(t); implementation(f);
   f.write('.knowledge/domains/sample.md', '---\ntype: Domain\ntitle: Sample\nverified: {by: human:old, at: 2026-01-01T00:00:00Z}\n---\n# Sample\n\nNovo comportamento.\n');
+  converge(f);
   ok(f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test'));
   const data = YAML.parse(f.read('.knowledge/domains/sample.md').split('---')[1]);
   assert.equal(data.verified, undefined);
@@ -219,4 +260,61 @@ test('hook publica revisão preparada em segundo plano sem loop', async t => {
   const head = f.git('rev-parse', 'HEAD');
   ok(spawnSync('bash', ['.git/hooks/post-commit'], { cwd: f.root, encoding: 'utf8' }));
   assert.equal(f.git('rev-parse', 'HEAD'), head);
+});
+
+
+test('Wiki não aceita implementação sem convergência comprovada', t => {
+  const f = fixture(t); implementation(f);
+  f.write('.knowledge/domains/sample.md', '---\ntype: Domain\n---\n# Sample\nRetorna 42.\n');
+  const result = f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test');
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /converg/i);
+});
+
+test('registro de convergência bloqueia tarefas pendentes e invalida mudanças posteriores', t => {
+  const f = fixture(t); implementation(f);
+  f.write('specs/active/sample/convergence-report.md', '# Converged\nRF-001: src/sample.js retorna 42; testes revisados.\n');
+  f.write('specs/active/sample/tasks.md', `- [ ] T001 Implementar\n- [ ] T002 ${wikiTask}\n`);
+  assert.notEqual(f.run('convergence.js', '--reviewed-by', 'codex/test').status, 0);
+  f.write('specs/active/sample/tasks.md', `- [x] T001 Implementar\n- [ ] T002 ${wikiTask}\n`);
+  ok(f.run('convergence.js', '--reviewed-by', 'codex/test'));
+  f.write('specs/active/sample/plan.md', f.read('specs/active/sample/plan.md') + '\nNova decisão.\n');
+  f.write('.knowledge/domains/sample.md', '---\ntype: Domain\n---\n# Sample\nRetorna 42.\n');
+  assert.notEqual(f.run('auto-sync-wiki.js', '--reviewed-by', 'codex/test').status, 0);
+});
+
+
+for (const change of ['spec', 'tasks', 'tests', 'report', 'constitution', 'quality']) {
+  test(`convergência é invalidada por alteração em ${change}`, t => {
+    const f = fixture(t); implementation(f); converge(f);
+    if (change === 'constitution') f.write('.specify/memory/constitution.md', f.read('.specify/memory/constitution.md') + '\nNovo princípio MUST.\n');
+    if (change === 'quality') f.write('.knowledge/manifest.yaml', f.read('.knowledge/manifest.yaml').replace('minimum_coverage_percent: 80', 'minimum_coverage_percent: 85'));
+    if (change === 'spec') f.write('specs/active/sample/spec.md', f.read('specs/active/sample/spec.md') + '\nRF-002: novo comportamento.\n');
+    if (change === 'tasks') f.write('specs/active/sample/tasks.md', f.read('specs/active/sample/tasks.md') + '\n- [ ] T003 Corrigir gap.\n');
+    if (change === 'tests') { f.write('tests/sample.test.js', 'throw Error("regressão");\n'); f.git('add', 'tests'); f.git('commit', '-qm', 'test: regression'); }
+    if (change === 'report') f.write('specs/active/sample/convergence-report.md', 'Relatório diferente.\n');
+    assert.notEqual(f.run('convergence.js', '--check').status, 0);
+    assert.notEqual(f.run('auto-sync-wiki.js').status, 0);
+  });
+}
+
+test('qualidade exige build e aceitação e permite inaplicabilidade justificada', t => {
+  const f = fixture(t); const { base, commit } = implementation(f);
+  const set = q => f.meta('specs/active/sample/spec.md', { status: 'verified', approved_by: 'human:test', base_commit: base, implementation_commit: commit, tests_passed: true, quality: q });
+  f.write('specs/active/sample/convergence-report.md', '# Converged\nRF-001 avaliado com testes.\n');
+  for (const field of ['build', 'acceptance']) {
+    const q = { ...quality }; delete q[field]; set(q);
+    assert.notEqual(f.run('convergence.js', '--reviewed-by', 'codex/test').status, 0);
+  }
+  set({ ...quality, types: { applicable: false }, build: { applicable: false } });
+  assert.notEqual(f.run('convergence.js', '--reviewed-by', 'codex/test').status, 0);
+  set({ ...quality, types: { applicable: false, reason: 'JavaScript sem verificador de tipos, conforme plano.' }, build: { applicable: false, reason: 'Biblioteca executada diretamente pelo Node, conforme plano.' } });
+  ok(f.run('convergence.js', '--reviewed-by', 'codex/test'));
+});
+
+test('archive exige prova de convergência mesmo com Wiki sincronizada', t => {
+  const f = fixture(t); implementation(f); review(f); ok(f.run('auto-sync-wiki.js'));
+  fs.unlinkSync(path.join(f.root, 'specs/active/sample/convergence.json'));
+  const result = f.run('feature.js', 'archive');
+  assert.notEqual(result.status, 0); assert.match(result.stderr, /Convergência ausente/);
 });

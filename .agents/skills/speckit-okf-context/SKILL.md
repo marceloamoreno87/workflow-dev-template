@@ -19,3 +19,22 @@ preencha approved_by por conta própria. Considere "aprovado, gere o plano"
 aprovação suficiente para a spec atual, sem perguntar novamente.
 
 Preserve os blocos JSON dos templates. Testes são obrigatórios pela constituição.
+
+
+Descubra conhecimento seletivamente: índice → conceitos diretamente afetados →
+dependências/links relevantes → contratos/ADRs. Comece com cerca de 5–10
+conceitos quando suficiente; amplie por necessidade justificada, sem carregar
+o bundle inteiro. Avalie status, verified, stale_after e sources; conhecimento
+obsoleto, sem fonte ou contraditório requer descoberta dirigida e uma lacuna
+explícita, nunca uma arquitetura presumida. OKF descreve o estado existente;
+spec descreve intenção; constituição governa; código/testes evidenciam realidade.
+
+No plan, preencha Knowledge Context com caminhos/fontes, validade e restrições
+observadas, distinguindo hipóteses. Vincule cada decisão aos conceitos e aos
+requisitos. Contratos específicos continuam em OpenAPI/Protobuf ou equivalente.
+No specify, preserve what/why e deixe escolhas técnicas para plan.
+
+Antes de converge, trate a única tarefa da Wiki como encerramento diferido:
+ela não é gap de implementação nem exige nova tarefa. Todo trabalho executável
+é avaliado normalmente. O hook after_converge só fará sync se o resultado real
+for converged; tarefas acrescentadas mantêm a Wiki no estado anterior.

@@ -21,7 +21,7 @@ Projeto existente ─→ descoberta dirigida do legado ─────┘
 
 Antes da primeira feature:
 
-1. revise a constituição e os princípios de qualidade;
+1. gere a constituição e revise os princípios de qualidade;
 2. identifique objetivos de negócio, atores, fluxos, restrições e escala;
 3. mantenha stack e arquitetura em aberto enquanto os requisitos não as
    justificarem;
@@ -87,9 +87,9 @@ Contexto OKF
     ↓
 Specify → Clarify → Aprovação
     ↓
-Plan → Tasks → Analyze
+Plan → Checklist (quando útil) → Tasks → Analyze
     ↓
-Implementação TDD
+Implementação TDD por lote → Verify
     ↓
 Converge ── encontrou lacunas? ──→ Implement novamente
     ↓
@@ -322,9 +322,9 @@ T012 Implementar retry, backoff e recuperação.
 T013 Testar concorrência e condições de corrida.
 
 Validação
-T014 Executar suíte, cobertura, lint e tipos.
+T014 Executar suíte, cobertura, lint, tipos, build e aceitação.
 T015 Registrar evidências reais em spec.md e tasks.md.
-T016 Executar $speckit-okf-sync.
+Encerramento após converge: T016 Executar $speckit-okf-sync.
 ```
 
 Cada tarefa deve apontar arquivos e requisitos específicos. Se surgir a
@@ -463,7 +463,8 @@ concluídas; ele as transforma em tarefas rastreáveis.
 
 ## 10. Sincronizar a Wiki OKF
 
-A tarefa final de conhecimento executa:
+Somente após resultado converged e convergence.json válido, o hook
+after_converge executa a tarefa final de conhecimento:
 
 ```text
 $speckit-okf-sync

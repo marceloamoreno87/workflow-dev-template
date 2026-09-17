@@ -1,38 +1,50 @@
-# Constituição de workflow-dev
+# [PROJECT_NAME] Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
-## I. Spec antes de código
+## Core Principles
 
-Mudanças em src/ exigem spec aprovada em specs/active/, com plan.md e tasks.md.
-A aprovação do desenvolvedor deve ser registrada; criar uma spec não a aprova.
+### [PRINCIPLE_1_NAME]
+<!-- Example: I. Library-First -->
+[PRINCIPLE_1_DESCRIPTION]
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-## II. Conhecimento antes de decisões
+### [PRINCIPLE_2_NAME]
+<!-- Example: II. CLI Interface -->
+[PRINCIPLE_2_DESCRIPTION]
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-Consulte .knowledge/manifest.yaml, .knowledge/index.md e conceitos pertinentes.
-Preserve a Wiki OKF v0.2; não transforme suposições em fatos.
+### [PRINCIPLE_3_NAME]
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+[PRINCIPLE_3_DESCRIPTION]
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-## III. Testes primeiro
+### [PRINCIPLE_4_NAME]
+<!-- Example: IV. Integration Testing -->
+[PRINCIPLE_4_DESCRIPTION]
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-TDD é obrigatório. Testes devem falhar pelo motivo esperado antes do código e
-passar depois. A política inicial exige cobertura mínima de 80%, cenários
-críticos cobertos, lint sem avisos e tipos estritos quando aplicáveis à stack.
-Defina e execute os comandos concretos no plano; registre evidências.
+### [PRINCIPLE_5_NAME]
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+[PRINCIPLE_5_DESCRIPTION]
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-## IV. Escopo e contexto
+## [SECTION_2_NAME]
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-Limite implementação aos arquivos mapeados. Use o contexto oficial em
-.specify/feature.json. Mova specs com .spec-kit/bin/feature.js.
+[SECTION_2_CONTENT]
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
-## V. Conhecimento atualizado ao concluir
+## [SECTION_3_NAME]
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-Toda lista de tarefas inclui atualização da Wiki. Execute a revisão semântica
-com $speckit-okf-sync antes de declarar implementação concluída. Os hooks da
-extensão OKF conectam o fluxo oficial a essa tarefa. O script valida YAML,
-proveniência e recibo e comita somente a Wiki. Arquive após convergência.
+[SECTION_3_CONTENT]
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
-## Governança
+## Governance
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-As regras detalhadas estão em .spec-kit/system-rules.md. Alterações destes
-princípios exigem decisão explícita do desenvolvedor. A stack da aplicação será
-definida na primeira feature; Node.js é ferramenta deste workflow.
+[GOVERNANCE_RULES]
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-12
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

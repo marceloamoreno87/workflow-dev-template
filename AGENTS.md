@@ -89,7 +89,7 @@ ferramentas, `specs/` para execução e `src/` para a aplicação.
 
 - Leia e siga [.spec-kit/system-rules.md](.spec-kit/system-rules.md). No Codex use as skills oficiais `$speckit-specify`, `$speckit-plan`, `$speckit-tasks`, `$speckit-implement`, `$speckit-converge` e a extensão `$speckit-okf-archive`.
 - A integração oficial está em `.specify/` e `.agents/skills/`. Use os templates de `.specify/templates/overrides/` e preserve o contexto de `.specify/feature.json` ao mover specs com `.spec-kit/bin/feature.js`.
-- Os hooks da extensão OKF são obrigatórios. A tarefa final da Wiki executa `$speckit-okf-sync` antes de declarar implementação concluída; não a marque antecipadamente. Hooks não substituem a execução real das skills.
+- Os hooks da extensão OKF são obrigatórios. Após qualidade aprovada e resultado `converged`, a tarefa final da Wiki executa `$speckit-okf-sync` antes de declarar o ciclo concluído; não a marque antecipadamente. Hooks não substituem a execução real das skills.
 - Antes de propor alterações, leia `.knowledge/manifest.yaml`, `.knowledge/index.md` e os conceitos dos domínios afetados.
 - Nenhuma alteração em `src/` sem spec aprovada em `specs/active/`, acompanhada de `plan.md` e `tasks.md`; aplique TDD.
 - Consulte apenas contexto pertinente e implemente somente nos arquivos previstos no plano e nas tarefas.

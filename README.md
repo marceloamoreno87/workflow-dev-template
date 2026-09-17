@@ -7,6 +7,24 @@ OKF consulta e atualiza a Wiki de conhecimento junto com cada feature.
 Para começar sem ler todo este guia, consulte o [guia rápido](QUICKSTART.md).
 Para um exemplo completo, consulte o [fluxo avançado](ADVANCED-WORKFLOW.md).
 
+## Estado inicial do template
+
+O template não contém specs, conhecimento compilado, recibos de execução ou
+constituição ratificada. Skills, scripts, templates, registros de instalação e
+configuração da extensão são componentes do workflow e permanecem disponíveis.
+Exemplos nos guias são ilustrativos, não features executadas.
+
+Ao criar um projeto, preencha `system.name` e `system.version` em
+`.knowledge/manifest.yaml` e gere sua constituição com `$speckit-constitution`.
+Revise a política de qualidade fornecida como padrão. Mantenha `domains: []`,
+`knowledge_version: "0.0.0"` e `last_synced_commit: null` até haver conhecimento
+real para registrar. A Wiki começa apenas com índice e manifesto.
+
+Antes de distribuir este template, execute
+`npm run audit:template --prefix .spec-kit`. Essa verificação exige estado vazio;
+projetos consumidores usam `npm run audit --prefix .spec-kit` para verificar a
+instalação do workflow.
+
 ## Visão geral
 
 | Área | Responsabilidade |
@@ -18,7 +36,7 @@ Para um exemplo completo, consulte o [fluxo avançado](ADVANCED-WORKFLOW.md).
 
 ```text
 necessidade → spec → aprovação → plano → tarefas → implementação TDD
-            → revisão da Wiki → convergência → arquivo
+            → verificação → convergência → revisão da Wiki → arquivo
 ```
 
 ## Adoção por tipo de projeto
@@ -37,14 +55,12 @@ uma baseline confiável antes da primeira implementação.
 
 ### Projeto novo, do zero
 
-1. Revise a constituição com `$speckit-constitution` se os princípios existentes
-   não representarem o novo produto.
+1. Gere a constituição do novo projeto com `$speckit-constitution`.
 2. Descreva objetivos, atores, fluxo principal, restrições e escala conhecida na
    primeira `$speckit-specify`.
 3. Use `$speckit-clarify` para decisões que alterem arquitetura ou escopo.
 4. Após aprovação, use `$speckit-plan` para definir a menor stack e estrutura que
-   atendam aos requisitos, bem como comandos reais de testes, cobertura, lint e
-   tipos.
+   atendam aos requisitos, bem como comandos reais de testes, cobertura, lint, tipos, build e aceitação.
 5. Registre os primeiros domínios, contratos e decisões na Wiki por meio do ciclo
    normal de implementação e sync.
 
@@ -77,7 +93,7 @@ quando for consultado e verificado.
 
 ```text
 specify → clarify → aprovação → plan → tasks → analyze
-        → implement → converge → sync → archive
+        → implement → verify → converge → sync → archive
 ```
 
 Em ambos os cenários, nenhuma alteração em `src/` ocorre antes de uma spec
@@ -192,6 +208,7 @@ Contém o código mantido pelo projeto para ligar o Spec Kit à Wiki.
 - `extensions/okf/`: fonte da extensão local e de seus hooks.
 - `templates/`: fontes dos overrides, versões fast-track e roteiro de sync.
 - `bin/feature.js`: seleciona e move features mantendo `feature.json`.
+- `bin/convergence.js`: registra convergência após a avaliação real do agente.
 - `bin/auto-sync-wiki.js`: prepara a diff, registra revisão e publica a Wiki.
 - `bin/validate-okf.js`: valida manifesto e conceitos OKF.
 - `bin/audit-workflow.js`: confere integração, skills, hooks, templates e estado.
@@ -214,6 +231,8 @@ research.md             # Decisões técnicas opcionais
 data-model.md           # Entidades e relacionamentos opcionais
 contracts/              # Contratos específicos da feature
 quickstart.md           # Cenários de validação opcionais
+convergence-report.md   # Avaliação de aderência feita pelo agente
+convergence.json        # Estado vinculado à avaliação de convergência
 wiki-sync.json          # Recibo da revisão final da Wiki
 ```
 
@@ -235,14 +254,14 @@ aponta para essas regras. Reinicie a sessão após alterar instruções ou skill
 
 | Skill | Quando usar | Resultado |
 | --- | --- | --- |
-| `$speckit-constitution` | Ao iniciar ou alterar princípios. | Atualiza a constituição; já existe uma versão inicial. |
+| `$speckit-constitution` | Ao iniciar ou alterar princípios. | Preenche o template com os princípios do projeto. |
 | `$speckit-specify <descrição>` | Ao iniciar uma feature. | Cria uma spec testável; o hook a move para backlog. |
 | `$speckit-clarify` | Quando requisitos relevantes estiverem ambíguos. | Faz perguntas focadas e atualiza a spec. |
 | `$speckit-plan` | Após aprovação explícita. | Gera arquitetura, contratos, pesquisa, modelo e impacto OKF. |
 | `$speckit-tasks` | Quando o plano estiver pronto. | Gera tarefas TDD; o hook ativa a feature e registra a base. |
 | `$speckit-analyze` | Antes da implementação. | Analisa lacunas entre spec, plano e tarefas sem mudar código. |
-| `$speckit-implement` | Após análise e ativação. | Executa tarefas com TDD e sincroniza a Wiki ao final. |
-| `$speckit-converge` | Depois da implementação. | Compara código e artefatos e acrescenta trabalho faltante. |
+| `$speckit-implement` | Após análise e ativação. | Executa o lote com TDD; verifica qualidade e mantém Wiki pendente. |
+| `$speckit-converge` | Depois da implementação. | Acrescenta gaps; só converged registra revisão e chama sync. |
 | `$speckit-okf-archive` | Após convergência, testes e sync. | Valida e move a feature para archive. |
 
 ### Skills auxiliares
@@ -254,6 +273,8 @@ aponta para essas regras. Reinicie a sessão após alterar instruções ou skill
 | `$speckit-okf-context` | Hook que consulta manifesto, índice, domínios, contratos e ADRs. |
 | `$speckit-okf-stage` | Hook que move uma nova spec para backlog e atualiza o contexto. |
 | `$speckit-okf-activate` | Valida aprovação/artefatos, ativa e registra o commit base. |
+| `$speckit-okf-verify` | Verifica o lote, respeita IDs/fases e mantém Wiki pendente. |
+| `$speckit-okf-converged` | Registra convergência real e só então chama sync. |
 | `$speckit-okf-sync` | Revisa a diff completa e sincroniza a Wiki; retoma falhas. |
 
 As skills OKF internas são chamadas pelos hooks. Também podem ser usadas
@@ -285,8 +306,10 @@ equivale a aprovação.
 
 ### 3. Planejar
 
-Execute `$speckit-plan`. O plano define stack, arquitetura, arquivos permitidos,
-comandos de qualidade e estratégia de teste. Também mapeia domínios:
+Execute `$speckit-plan`. Preencha Knowledge Context com conceitos, fontes,
+validade, restrições, lacunas e vínculo com decisões/requisitos. O plano define stack, arquitetura, arquivos permitidos,
+comandos de qualidade e estratégia de teste. Tipos/build não aplicáveis exigem
+`applicable: false` e justificativa concreta; aceitação continua obrigatória. Também mapeia domínios:
 
 ```json
 [
@@ -326,17 +349,29 @@ Execute `$speckit-implement`. Para cada comportamento:
 3. implemente o mínimo necessário;
 4. execute novamente;
 5. refatore mantendo testes verdes;
-6. rode cobertura, lint e tipos definidos no plano;
-7. registre em `spec.md` os comandos/resultados de testes, cobertura, lint e
-   tipos; a cobertura deve atingir o mínimo do manifesto;
+6. rode cobertura, lint, tipos, build e aceitação definidos no plano;
+7. registre em `spec.md` os comandos/resultados de testes, cobertura, lint, tipos, build e aceitação; a cobertura deve atingir o mínimo do manifesto;
 8. marque apenas tarefas concluídas.
 
 Se surgir arquivo ou domínio fora do plano, atualize plano e tarefas primeiro.
 Mudanças de escopo exigem decisão do desenvolvedor.
 
-### 7. Sincronizar a Wiki
+### 7. Verificar convergência
 
-A tarefa final e o hook `after_implement` chamam `$speckit-okf-sync`. O Codex lê
+Execute `$speckit-converge` após a qualidade final. Ele avalia a realidade contra
+spec, plano, tarefas e constituição. Se acrescentar tarefas, repita implement →
+verify → converge. A única tarefa da Wiki é encerramento diferido, não gap de
+código. O core converge mantém os artefatos de intenção; o hook local registra
+convergence-report.md e convergence.json somente após resultado converged.
+
+Esse recibo vincula código/testes, spec/plano/tarefas e relatório. Alterações
+posteriores exigem nova avaliação. Ele registra a revisão realizada, sem provar
+correção semântica automaticamente.
+
+### 8. Sincronizar a Wiki
+
+Somente resultado converged autoriza o hook `after_converge` a chamar
+`$speckit-okf-sync` e concluir a tarefa final. O Codex lê
 a diff entre `base_commit` e o commit final, confronta código e conceitos,
 atualiza conhecimento durável e grava `wiki-sync.json`. O script valida YAML,
 proveniência e hashes, cria um commit só da Wiki e então marca a tarefa.
@@ -356,11 +391,11 @@ git rev-parse --git-path okf-auto-sync.lock
 node .spec-kit/bin/validate-okf.js
 ```
 
-### 8. Convergir e arquivar
+### 9. Arquivar
 
-Execute `$speckit-converge`. Se novas tarefas forem criadas, execute novamente
-`$speckit-implement` e repita a convergência. Quando não houver trabalho restante,
-execute `$speckit-okf-archive`. O arquivo valida testes, código local, recibo,
+Com convergência e sync válidos, execute `$speckit-okf-archive`. Se o recibo de
+convergência ficou obsoleto, refaça converge e resolva novas tarefas antes de
+seguir. O arquivo valida testes, código local, recibo,
 manifesto e hashes antes de mover a pasta para archive, então cria um commit
 local exclusivo dos artefatos da spec. Nenhuma automação faz push.
 
@@ -389,7 +424,7 @@ com escopo incerto seguem o fluxo completo.
 - Registre a fase vermelha; teste escrito depois não comprova TDD.
 - Não marque aprovação, testes ou tarefas sem evidência.
 - Não inicie outra feature enquanto existir uma pasta em `specs/active/`.
-- Não altere a Wiki antes de ativar; a ativação exige uma base limpa.
+- A ativação exige Wiki limpa; mudanças futuras só entram no OKF após converge.
 - Evite misturar duas features no intervalo iniciado por `base_commit`.
 - Não use `git add .` no sync; preserve alterações staged que não pertencem à Wiki.
 - Não edite `wiki-sync.json` manualmente.
@@ -431,7 +466,8 @@ Recuperação de sync:
 
 - sem recibo: execute `$speckit-okf-sync`;
 - commit da Wiki falhou: corrija e execute `auto-sync-wiki.js` novamente;
-- código, plano ou Wiki mudou após revisão: refaça `$speckit-okf-sync`;
+- código/testes, spec, plano ou tarefas mudou: refaça converge antes do sync;
+- somente Wiki mudou após revisão: refaça `$speckit-okf-sync`;
 - trava residual: confira o PID no arquivo antes de removê-lo;
 - feature incorreta: use `feature.js select`;
 - skills ausentes: abra o Codex na raiz e reinicie a sessão.
@@ -443,10 +479,45 @@ Recuperação de sync:
 - [Regras do agente](.spec-kit/system-rules.md)
 - [Constituição](.specify/memory/constitution.md)
 - [Índice da Wiki](.knowledge/index.md)
-- [Decisão de integração](.knowledge/architecture/spec-kit-okf.md)
 - [Roteiro do sync](.spec-kit/templates/wiki-sync-prompt.md)
 - [Guia técnico](.spec-kit/README.md)
 
 Referências externas: [GitHub Spec Kit](https://github.com/github/spec-kit),
 [integração Codex](https://github.github.io/spec-kit/reference/integrations.html)
-e [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
+e [OKF v0.2](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md).
+
+
+## Autoridade e descoberta seletiva
+
+| Artefato | Autoridade |
+| --- | --- |
+| Constitution | Princípios de desenvolvimento invariáveis |
+| OKF | Conhecimento do sistema existente, sustentado por fontes |
+| spec.md | Comportamento desejado, what/why |
+| plan.md | Integração técnica, decisões e Knowledge Context |
+| tasks.md | Execução e rastreabilidade |
+| Código e testes | Realidade executável e evidências |
+| Converge | Avaliação de aderência, com revisão real do agente |
+
+Consulte índice → conceitos afetados → dependências relevantes. Cerca de 5–10
+conceitos costuma ser um início útil, sem limite rígido e sem carregar todo o
+bundle. Conhecimento stale, sem fonte ou contraditório requer descoberta dirigida.
+OKF referencia contratos formais; não substitui OpenAPI/Protobuf.
+
+## Execução por fases e Spec of Specs
+
+```text
+$speckit-implement Implemente somente T001–T005. Pare depois.
+Execute as verificações do lote no plano. Não continue se falharem.
+```
+
+Registre evidências e, quando apropriado, faça commit local do lote. Em seguida,
+execute o próximo intervalo. Só depois do gate final completo execute converge;
+enquanto houver gaps, repita o ciclo sem atualizar OKF. Status verified indica
+qualidade final aprovada; completed exige convergência e Wiki sincronizada.
+
+Tente fases antes de decompor uma feature. Se sub-specs independentes forem
+necessárias, mantenha um roadmap em specs/backlog/<roadmap>/ com dependências,
+contratos compartilhados e critérios de integração. O roadmap é coordenação,
+não feature executável nem domínio OKF. Cada sub-spec tem seu ciclo completo e
+apenas uma pode ficar ativa. Fatos futuros ficam nas specs, não na Wiki atual.

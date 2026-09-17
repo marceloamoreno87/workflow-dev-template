@@ -1,5 +1,18 @@
 # Plano: {{FEATURE}}
 
+## Knowledge Context
+
+Navegue pelo índice e leia apenas conceitos/dependências pertinentes.
+
+| Conceito / caminho | Fontes e validade | Restrição existente | Decisão / requisito |
+| --- | --- | --- | --- |
+| [arquivo OKF] | [status, verified, stale_after, sources avaliados] | [fato observado] | [RF/SC e decisão técnica] |
+
+### Lacunas e hipóteses
+
+[Conhecimento ausente/obsoleto/conflitante, descoberta dirigida e evidência
+necessária. Não descreva mudança futura como fato atual.]
+
 ## Mapeamento de impacto
 
 Leia o manifesto e os conceitos envolvidos. Liste arquivos exatos de código,
@@ -49,8 +62,21 @@ deste ciclo. O resumo é contexto; revise a Wiki a partir da diff completa.
 - Testes e cobertura: [comando reproduzível]
 - Lint sem avisos: [comando]
 - Tipos estritos: [comando, se aplicável à stack]
+- Build de produção: [comando, ou não aplicável com justificativa]
+- Aceitação: [comando que verifica cenários RF/US; pode usar a suíte acima]
 - Evidência esperada da fase vermelha: [falha correspondente ao requisito]
 
 ## Sequência e recuperação
 
 [Ordem de execução, compatibilidade, migrações e reversão quando aplicáveis.]
+
+
+## Fases e critérios de parada
+
+[Intervalos de IDs/fases independentes, dependências, comandos por lote e gate
+final completo. Pare após o lote solicitado ou falha de verificação.]
+
+Converge avalia todo o trabalho executável antes da tarefa final da Wiki.
+Alterar spec/plano/tarefas/código/testes após convergir exige nova avaliação.
+Para features grandes, tente fases primeiro; use Spec of Specs apenas quando
+sub-specs independentes forem necessárias, com roadmap e contratos compartilhados.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { fs, path, safe, read, write, metadata, setMetadata, feature, head, git, tasks, hash, validateBundle, validateQuality } = require('./lib');
+const { fs, path, safe, read, write, metadata, setMetadata, feature, head, git, tasks, hash, validateBundle, validateQuality, validateConvergence } = require('./lib');
 try {
   const [action, explicit] = process.argv.slice(2);
   if (!['stage', 'activate', 'select', 'archive'].includes(action)) throw Error('Uso: feature.js stage|activate|select|archive [specs/.../nome]');
@@ -12,7 +12,7 @@ try {
   }
   if (action === 'activate') {
     if (dir.startsWith('specs/archive/')) throw Error('Feature arquivada; crie novo ciclo.');
-    if (!['approved', 'completed'].includes(meta.status) || !/^human:[^\s]+$/.test(meta.approved_by || '')) throw Error('Spec precisa de aprovação explícita registrada como human:<id>.');
+    if (!['approved', 'verified', 'completed'].includes(meta.status) || !/^human:[^\s]+$/.test(meta.approved_by || '')) throw Error('Spec precisa de aprovação explícita registrada como human:<id>.');
     const domains = metadata(`${dir}/plan.md`, 'domains');
     const manifest = validateBundle();
     if (!Array.isArray(domains) || !domains.length) throw Error('Preencha os domínios OKF no plano.');
@@ -42,6 +42,8 @@ try {
     if (git('status', '--porcelain', '--untracked-files=all', '--', '.knowledge/')) throw Error('A Wiki precisa estar limpa antes de ativar ou retomar a feature.');
   }
   if (action === 'archive') {
+    validateConvergence(dir);
+    if (meta.status !== 'completed') throw Error('Conclua o sync da Wiki antes de arquivar.');
     validateBundle();
     validateQuality(meta);
     if (tasks(dir, true).some(t => t[1] === ' ')) throw Error('Spec/testes/tarefas ainda não concluídos.');

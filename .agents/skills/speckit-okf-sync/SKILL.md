@@ -7,6 +7,11 @@ metadata:
   source: okf:commands/sync.md
 ---
 
+Antes de editar conhecimento, execute
+`node .spec-kit/bin/convergence.js --check` para validar convergence.json com
+a implementação e artefatos atuais; sem convergência comprovada, execute
+$speckit-converge e não sincronize se houver gaps.
+
 Leia `.spec-kit/templates/wiki-sync-prompt.md` e execute seu procedimento na
 feature atual de `.specify/feature.json`. Você é o sintetizador: leia a diff,
 o código pertinente e os conceitos, e edite o conhecimento durável.

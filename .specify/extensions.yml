@@ -57,12 +57,30 @@ hooks:
     prompt: Execute speckit.okf.activate?
     description: ''
     condition: null
-  after_implement:
+  before_converge:
   - extension: okf
-    command: speckit.okf.sync
+    command: speckit.okf.context
     enabled: true
     optional: false
     priority: 10
-    prompt: Execute speckit.okf.sync?
+    prompt: Execute speckit.okf.context?
+    description: ''
+    condition: null
+  after_implement:
+  - extension: okf
+    command: speckit.okf.verify
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.verify?
+    description: ''
+    condition: null
+  after_converge:
+  - extension: okf
+    command: speckit.okf.converged
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.okf.converged?
     description: ''
     condition: null

@@ -3,6 +3,6 @@
   "private": true,
   "type": "commonjs",
   "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test tests/*.test.js", "validate": "node bin/validate-okf.js", "audit": "node bin/audit-workflow.js" },
+  "scripts": { "test": "node --test tests/*.test.js", "validate": "node bin/validate-okf.js", "audit": "node bin/audit-workflow.js", "audit:template": "node bin/audit-template.js" },
   "dependencies": { "yaml": "^2.8.1" }
 }

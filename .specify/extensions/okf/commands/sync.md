@@ -2,6 +2,11 @@
 description: Atualizar a Wiki OKF com análise semântica da diff completa da feature.
 ---
 
+Antes de editar conhecimento, execute
+`node .spec-kit/bin/convergence.js --check` para validar convergence.json com
+a implementação e artefatos atuais; sem convergência comprovada, execute
+__SPECKIT_COMMAND_CONVERGE__ e não sincronize se houver gaps.
+
 Leia `.spec-kit/templates/wiki-sync-prompt.md` e execute seu procedimento na
 feature atual de `.specify/feature.json`. Você é o sintetizador: leia a diff,
 o código pertinente e os conceitos, e edite o conhecimento durável.

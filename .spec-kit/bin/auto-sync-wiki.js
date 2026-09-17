@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const { fs, path, root, git, safe, read, write, hash, document, metadata, setMetadata, feature, head, tasks, wikiTask, validateBundle, validateQuality } = require('./lib');
+const { fs, path, root, git, safe, read, write, hash, document, metadata, setMetadata, feature, head, tasks, wikiTask, validateBundle, validateQuality, validateConvergence } = require('./lib');
 const message = 'docs(wiki): atualiza conhecimento OKF v0.2 [auto-sync]';
 function context(dir, commit) {
   const meta = metadata(`${dir}/spec.md`);
@@ -36,6 +36,7 @@ function ready(dir) {
   const meta = metadata(`${dir}/spec.md`);
   validateQuality(meta);
   tasks(dir, true);
+  validateConvergence(dir);
 }
 function outputs(ctx, actor) {
   const result = new Map(); const now = new Date().toISOString();
@@ -144,6 +145,7 @@ function main() {
     }
     const taskFile = `${dir}/tasks.md`;
     write(taskFile, read(taskFile).split('\n').map(line => line.includes(wikiTask) ? line.replace('- [ ]', '- [x]') : line).join('\n'));
+    const meta = metadata(`${dir}/spec.md`); meta.status = 'completed'; setMetadata(`${dir}/spec.md`, meta);
     console.log(`Wiki sincronizada; HEAD ${head()}.`);
   } finally { fs.closeSync(fd); fs.unlinkSync(lock); }
 }

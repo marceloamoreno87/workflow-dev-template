@@ -50,16 +50,17 @@ function tasks(file, complete = false) {
   return entries;
 }
 function validateQuality(meta, manifest = validateBundle()) {
-  if (!meta || meta.status !== 'completed' || meta.tests_passed !== true) throw Error('Spec ainda não registra implementação e testes concluídos.');
+  if (!meta || !['verified', 'completed'].includes(meta.status) || meta.tests_passed !== true) throw Error('Spec ainda não registra implementação e testes concluídos.');
   if (!/^human:[^\s]+$/.test(meta.approved_by || '')) throw Error('approved_by deve identificar a aprovação real como human:<id>.');
   const quality = meta.quality;
-  if (!quality || !quality.tests || !quality.lint || !quality.types) throw Error('Evidências estruturadas de testes, lint e tipos estão ausentes.');
-  for (const name of ['tests', 'lint', 'types']) {
+  if (!quality || !quality.tests || !quality.lint || !quality.types || !quality.build || !quality.acceptance) throw Error('Evidências estruturadas de testes, lint, tipos, build e aceitação estão ausentes.');
+  for (const name of ['tests', 'lint', 'types', 'build', 'acceptance']) {
+    if (['types', 'build'].includes(name) && quality[name].applicable === false && typeof quality[name].reason === 'string' && quality[name].reason.trim()) continue;
     if (quality[name].passed !== true || typeof quality[name].command !== 'string' || !quality[name].command.trim()) throw Error(`Evidência inválida para ${name}.`);
   }
   const minimum = manifest.quality?.tests?.minimum_coverage_percent;
   if (!quality.coverage || quality.coverage.passed !== true || typeof quality.coverage.command !== 'string' || !quality.coverage.command.trim() ||
-      typeof quality.coverage.percent !== 'number' || typeof minimum !== 'number' || quality.coverage.percent < minimum) throw Error(`Cobertura deve comprovar no mínimo ${minimum}%.`);
+      !Number.isFinite(quality.coverage.percent) || quality.coverage.percent > 100 || typeof minimum !== 'number' || quality.coverage.percent < minimum) throw Error(`Cobertura deve comprovar no mínimo ${minimum}%.`);
   return quality;
 }
 function validateBundle(overrides = new Map()) {
@@ -119,4 +120,31 @@ function validateBundle(overrides = new Map()) {
   }
   return manifest;
 }
-module.exports = { fs, path, root, YAML, git, safe, read, write, hash, document, metadata, setMetadata, feature, head, tasks, wikiTask, validateBundle, validateQuality };
+
+// O recibo atesta o estado revisado, não executa a avaliação semântica.
+function convergenceState(dir) {
+  const meta = metadata(`${dir}/spec.md`);
+  validateQuality(meta);
+  tasks(dir, true);
+  if (git('status', '--porcelain', '--untracked-files=all', '--', 'src/', 'tests/').split('\n').some(l => l && !l.endsWith('.gitkeep'))) throw Error('Código/testes locais invalidam convergência; faça commit e revise novamente.');
+  const spec = read(`${dir}/spec.md`).replace(/(<!-- spec-kit:metadata -->\s*```json\s*)[\s\S]*?(```)/, (_, a, b) => {
+    const { status, implementation_commit, ...intent } = meta;
+    return a + JSON.stringify(intent) + '\n' + b;
+  });
+  const taskText = read(`${dir}/tasks.md`).split('\n').map(line => line.includes(wikiTask) ? line.replace(/- \[[ xX]\]/, '- [ ]') : line).join('\n');
+  const report = read(`${dir}/convergence-report.md`);
+  if (!report.trim()) throw Error('Relatório de convergência vazio.');
+  return { base: meta.base_commit, code_hash: hash(git('ls-tree', '-r', 'HEAD', '--', 'src/', 'tests/')),
+    constitution_hash: hash(read('.specify/memory/constitution.md')), quality_policy_hash: hash(JSON.stringify(validateBundle().quality)),
+    spec_hash: hash(spec), plan_hash: hash(read(`${dir}/plan.md`)), tasks_hash: hash(taskText), report_hash: hash(report) };
+}
+function validateConvergence(dir) {
+  if (!fs.existsSync(safe(`${dir}/convergence.json`))) throw Error('Convergência ausente; execute $speckit-converge antes de atualizar a Wiki.');
+  const receipt = JSON.parse(read(`${dir}/convergence.json`));
+  if (receipt.outcome !== 'converged' || !/^(?:human:|process:|[^\s/]+\/)[^\s]+$/.test(receipt.reviewed_by || '')) throw Error('Recibo de convergência inválido.');
+  const state = convergenceState(dir);
+  for (const [key, value] of Object.entries(state)) if (receipt[key] !== value) throw Error(`Convergência obsoleta (${key}); execute $speckit-converge novamente.`);
+  return receipt;
+}
+
+module.exports = { fs, path, root, YAML, git, safe, read, write, hash, document, metadata, setMetadata, feature, head, tasks, wikiTask, validateBundle, validateQuality, convergenceState, validateConvergence };

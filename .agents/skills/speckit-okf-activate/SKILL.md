@@ -20,5 +20,6 @@ segunda feature ativa ou mudanças locais em `src/`/`.knowledge/` bloqueiam a
 ativação; faça commits separados ou conclua o ciclo atual.
 
 Antes de implementar, leia os conceitos afetados e verifique que a checklist
-tem testes antes de código. A tarefa da Wiki é executada pelo hook sync; não a
+tem testes antes de código. Respeite fases/IDs solicitados. Durante implement, não execute a tarefa Wiki,
+mesmo quando todas as tarefas de código tiverem terminado. A tarefa da Wiki só é executada após converge; não a
 marque até esse hook concluir. Falha de ativação bloqueia alterações em src/.
