@@ -31,7 +31,7 @@ func Fold(events []Event) (WorkItem, error) {
 	if first.Version != 1 {
 		return WorkItem{}, ErrVersionGap
 	}
-	if first.Type != EventWorkSubmitted || !first.To.Valid() {
+	if first.Type != EventWorkSubmitted || first.To != StateInbox {
 		return WorkItem{}, ErrTransitionMismatch
 	}
 

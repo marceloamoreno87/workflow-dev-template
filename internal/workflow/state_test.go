@@ -100,3 +100,14 @@ func TestFoldRejectsResumeToDifferentState(t *testing.T) {
 		t.Fatalf("Fold() error = %v, want %v", err, ErrTransitionMismatch)
 	}
 }
+
+func TestFoldRejectsDirectSubmissionToBlocked(t *testing.T) {
+	t.Parallel()
+
+	_, err := Fold([]Event{
+		{ID: "e1", AggregateID: "repo#1", Version: 1, Type: EventWorkSubmitted, To: StateBlocked, At: time.Unix(1, 0)},
+	})
+	if !errors.Is(err, ErrTransitionMismatch) {
+		t.Fatalf("Fold() error = %v, want %v", err, ErrTransitionMismatch)
+	}
+}
