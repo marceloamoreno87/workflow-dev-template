@@ -1,0 +1,3 @@
+# Run local Codex with containerized Project tasks
+
+Codex CLI and its existing local authentication run on the trusted host under a generated workspace-write sandbox restricted to one Project Worktree, with restricted network, isolated configuration, and allowlisted Skills and MCP tools. Codex never receives the Docker socket or infrastructure credentials; the Project Runner executes declared build, test, scanner, and lifecycle Tasks in unprivileged ephemeral containers. This supersedes ADR-0011, which placed the entire Agent Role inside a container and would have complicated safe reuse of local Codex authentication.
