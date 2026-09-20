@@ -176,6 +176,21 @@ func TestAllowed(t *testing.T) {
 	}
 }
 
+func TestAllowedIncludesSubmitWorkOnlyForNewWork(t *testing.T) {
+	t.Parallel()
+
+	w := Workflow{}
+	if got, want := w.Allowed(WorkItem{}), []CommandType{CommandSubmitWork}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("Allowed(new work) = %#v, want %#v", got, want)
+	}
+
+	for _, commandType := range w.Allowed(WorkItem{State: StateInbox}) {
+		if commandType == CommandSubmitWork {
+			t.Fatalf("Allowed(inbox work) unexpectedly includes %q", CommandSubmitWork)
+		}
+	}
+}
+
 func allCommandTypes() map[CommandType]struct{} {
 	commands := make(map[CommandType]struct{})
 	for _, stateCommands := range transitions {

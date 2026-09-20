@@ -41,6 +41,18 @@ func TestPolicyDecisions(t *testing.T) {
 			want:    Decision{Allowed: true, Code: CodeAllowed},
 		},
 		{
+			name:    "automation standard merge requires an operator human gate",
+			context: Context{State: workflow.StateReviewing, Actor: automation, Profile: ProfileStandard},
+			command: workflow.Command{Type: workflow.CommandApprovePR},
+			want:    Decision{Code: CodeHumanGateRequired},
+		},
+		{
+			name:    "automation critical merge requires an operator human gate",
+			context: Context{State: workflow.StateReviewing, Actor: automation, Profile: ProfileCritical},
+			command: workflow.Command{Type: workflow.CommandApprovePR},
+			want:    Decision{Code: CodeHumanGateRequired},
+		},
+		{
 			name:    "contributor may accept during client QA",
 			context: Context{State: workflow.StateClientQA, Actor: contributor, Profile: ProfileStandard},
 			command: workflow.Command{Type: workflow.CommandAcceptFeature},
@@ -57,6 +69,30 @@ func TestPolicyDecisions(t *testing.T) {
 			context: Context{State: workflow.StateImplementing, Actor: automation, Profile: ProfileStandard},
 			command: workflow.Command{Type: workflow.CommandSubmitReview},
 			want:    Decision{Allowed: true, Code: CodeAllowed},
+		},
+		{
+			name:    "automation may not authorize work",
+			context: Context{State: workflow.StateTriage, Actor: automation, Profile: ProfileStandard},
+			command: workflow.Command{Type: workflow.CommandAuthorizeWork},
+			want:    Decision{Code: CodeActorDenied},
+		},
+		{
+			name:    "automation may not approve a spec",
+			context: Context{State: workflow.StateSpecifying, Actor: automation, Profile: ProfileStandard},
+			command: workflow.Command{Type: workflow.CommandApproveSpec},
+			want:    Decision{Code: CodeActorDenied},
+		},
+		{
+			name:    "automation may not approve a prototype PR",
+			context: Context{State: workflow.StateReviewing, Actor: automation, Profile: ProfilePrototype},
+			command: workflow.Command{Type: workflow.CommandApprovePR},
+			want:    Decision{Code: CodeActorDenied},
+		},
+		{
+			name:    "automation may not accept a feature",
+			context: Context{State: workflow.StateClientQA, Actor: automation, Profile: ProfileStandard},
+			command: workflow.Command{Type: workflow.CommandAcceptFeature},
+			want:    Decision{Code: CodeActorDenied},
 		},
 		{
 			name:    "automation may not change policy",
@@ -105,6 +141,11 @@ func TestContributorMaySubmitOrCancelOnlyOwnInboxWork(t *testing.T) {
 	submitted := p.Decide(Context{Actor: ActorContributor, Profile: ProfileStandard}, workflow.Command{Type: workflow.CommandSubmitWork})
 	if submitted != (Decision{Allowed: true, Code: CodeAllowed}) {
 		t.Fatalf("expected contributor submission to be allowed, got %#v", submitted)
+	}
+
+	resubmitted := p.Decide(Context{State: workflow.StateInbox, Actor: ActorContributor, Profile: ProfileStandard}, workflow.Command{Type: workflow.CommandSubmitWork})
+	if resubmitted != (Decision{Code: CodeStateDenied}) {
+		t.Fatalf("expected existing work submission to be state denied, got %#v", resubmitted)
 	}
 
 	for _, test := range []struct {

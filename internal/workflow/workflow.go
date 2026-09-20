@@ -64,6 +64,9 @@ func (Workflow) Handle(now time.Time, item WorkItem, command Command) ([]Event, 
 }
 
 func (Workflow) Allowed(item WorkItem) []CommandType {
+	if item == (WorkItem{}) {
+		return []CommandType{CommandSubmitWork}
+	}
 	if item.State == StateBlocked {
 		return []CommandType{CommandResolveBlock}
 	}

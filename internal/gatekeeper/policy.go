@@ -132,9 +132,6 @@ func automationAllowed(commandType workflow.CommandType) bool {
 }
 
 func allowedInState(state workflow.State, commandType workflow.CommandType) bool {
-	if state == "" && commandType == workflow.CommandSubmitWork {
-		return true
-	}
 	for _, allowed := range (workflow.Workflow{}).Allowed(workflow.WorkItem{State: state}) {
 		if allowed == commandType {
 			return true
