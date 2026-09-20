@@ -58,6 +58,9 @@ func Fold(events []Event) (WorkItem, error) {
 		if workItem.State != StateBlocked && event.To == StateBlocked {
 			workItem.ResumeState = workItem.State
 		} else if workItem.State == StateBlocked && event.To != StateBlocked {
+			if event.To != workItem.ResumeState {
+				return WorkItem{}, ErrTransitionMismatch
+			}
 			workItem.ResumeState = ""
 		}
 

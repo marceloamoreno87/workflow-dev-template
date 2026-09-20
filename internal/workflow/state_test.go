@@ -77,12 +77,26 @@ func TestFoldCapturesAndClearsBlockedResumeState(t *testing.T) {
 		t.Fatalf("blocked work item = %#v", blocked)
 	}
 
-	events = append(events, Event{ID: "e4", AggregateID: "repo#1", Version: 4, Type: EventStateChanged, From: StateBlocked, To: StateReady, At: time.Unix(4, 0)})
+	events = append(events, Event{ID: "e4", AggregateID: "repo#1", Version: 4, Type: EventStateChanged, From: StateBlocked, To: StateTriage, At: time.Unix(4, 0)})
 	resumed, err := Fold(events)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resumed.State != StateReady || resumed.ResumeState != "" {
+	if resumed.State != StateTriage || resumed.ResumeState != "" {
 		t.Fatalf("resumed work item = %#v", resumed)
+	}
+}
+
+func TestFoldRejectsResumeToDifferentState(t *testing.T) {
+	t.Parallel()
+
+	_, err := Fold([]Event{
+		{ID: "e1", AggregateID: "repo#1", Version: 1, Type: EventWorkSubmitted, To: StateInbox, At: time.Unix(1, 0)},
+		{ID: "e2", AggregateID: "repo#1", Version: 2, Type: EventStateChanged, From: StateInbox, To: StateTriage, At: time.Unix(2, 0)},
+		{ID: "e3", AggregateID: "repo#1", Version: 3, Type: EventStateChanged, From: StateTriage, To: StateBlocked, At: time.Unix(3, 0)},
+		{ID: "e4", AggregateID: "repo#1", Version: 4, Type: EventStateChanged, From: StateBlocked, To: StateReady, At: time.Unix(4, 0)},
+	})
+	if !errors.Is(err, ErrTransitionMismatch) {
+		t.Fatalf("Fold() error = %v, want %v", err, ErrTransitionMismatch)
 	}
 }
