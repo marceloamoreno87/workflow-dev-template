@@ -28,11 +28,15 @@ stateDiagram-v2
     Reviewing --> Blocked
     Deploying --> Failed
     ClientQA --> Blocked
-    Blocked --> Ready: blocking decision resolved
+    Blocked --> [H]: blocking decision resolved
     Failed --> ReadyToDeploy: retry authorized
 ```
 
 GitHub Project status is a projection and command surface. The Workflow Module owns valid transitions. Closing an Issue during an open Acceptance Gate records contributor intent but cannot bypass pending technical Gates.
+
+Resolving a blocked Work Item resumes the captured pre-block State. This preserves
+the interrupted workflow stage and avoids treating a temporary blocker as a new
+authorization decision.
 
 ## Delivery sequence
 
