@@ -1,6 +1,7 @@
 package journal
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -67,5 +68,60 @@ func TestApplyIsIdempotentByCommandID(t *testing.T) {
 	}
 	if count != 1 {
 		t.Fatalf("event count = %d, want 1", count)
+	}
+}
+
+func TestApplyRejectsStaleVersionWithoutNewEvents(t *testing.T) {
+	t.Parallel()
+
+	s, err := Open(filepath.Join(t.TempDir(), "journal.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if _, err := s.Apply(time.Unix(1, 0).UTC(), workflow.Command{ID: "c1", AggregateID: "repo#1", ExpectedVersion: 0, ActorID: "operator", Type: workflow.CommandSubmitWork}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Apply(time.Unix(2, 0).UTC(), workflow.Command{ID: "c2", AggregateID: "repo#1", ExpectedVersion: 1, ActorID: "operator", Type: workflow.CommandBeginTriage}); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = s.Apply(time.Unix(3, 0).UTC(), workflow.Command{ID: "c3", AggregateID: "repo#1", ExpectedVersion: 1, ActorID: "operator", Type: workflow.CommandAuthorizeWork})
+	if !errors.Is(err, ErrConflict) {
+		t.Fatalf("Apply() error = %v, want ErrConflict", err)
+	}
+
+	got, err := s.Load("repo#1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.State != workflow.StateTriage || got.Version != 2 {
+		t.Fatalf("unexpected work item: %#v", got)
+	}
+}
+
+func TestLoadRebuildsStateAndReportsMissing(t *testing.T) {
+	t.Parallel()
+
+	s, err := Open(filepath.Join(t.TempDir(), "journal.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if _, err := s.Load("missing#1"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Load() error = %v, want ErrNotFound", err)
+	}
+
+	if _, err := s.Apply(time.Unix(1, 0).UTC(), workflow.Command{ID: "c1", AggregateID: "repo#9", ExpectedVersion: 0, ActorID: "operator", Type: workflow.CommandSubmitWork}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Load("repo#9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "repo#9" || got.State != workflow.StateInbox || got.Version != 1 {
+		t.Fatalf("unexpected work item: %#v", got)
 	}
 }

@@ -68,6 +68,24 @@ func (s *Store) Close() error {
 
 var ErrConflict = errors.New("stale expected version")
 
+var ErrNotFound = errors.New("work item not found")
+
+func (s *Store) Load(id workflow.WorkItemID) (workflow.WorkItem, error) {
+	rows, err := s.db.Query(`SELECT aggregate_id, version, command_id, actor_id, type, from_state, to_state, reason, at FROM events WHERE aggregate_id=? ORDER BY version`, string(id))
+	if err != nil {
+		return workflow.WorkItem{}, err
+	}
+	defer rows.Close()
+	events, err := scanEvents(rows)
+	if err != nil {
+		return workflow.WorkItem{}, err
+	}
+	if len(events) == 0 {
+		return workflow.WorkItem{}, ErrNotFound
+	}
+	return workflow.Fold(events)
+}
+
 func formatTime(t time.Time) string {
 	return t.UTC().Format(time.RFC3339Nano)
 }
