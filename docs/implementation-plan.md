@@ -50,4 +50,14 @@ Persisted Events rebuild identical Work Item State after close/reopen and stale 
 - [x] `go test -race ./...` — PASS (324 specs, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 
+## Increment 3 verification
+
+Verified 2026-09-21 in the `feat-cli` Project Worktree with Go 1.27.1.
+Register then validate then list agree on one fixture Project and escaping paths never persist a registry.
+
+- [x] `go test ./internal/cli -run TestRegister -count=1` — PASS (register→manifest+gitmodules fixture→validate lists OK demo, list agrees, escape rejected without persisting)
+- [x] `go test -race ./...` — PASS (351 passed in 6 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
