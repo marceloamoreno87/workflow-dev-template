@@ -191,3 +191,42 @@ func loadWorkItemTx(tx *sql.Tx, id workflow.WorkItemID) (workflow.WorkItem, erro
 	}
 	return workflow.Fold(events)
 }
+
+func (s *Store) AcquireLease(resource, holder string, ttl time.Duration, now time.Time) (bool, error) {
+	now = now.UTC()
+	expires := formatTime(now.Add(ttl))
+	res, err := s.db.Exec(`INSERT INTO leases(resource, holder, expires_at) VALUES(?,?,?) ON CONFLICT(resource) DO UPDATE SET holder=excluded.holder, expires_at=excluded.expires_at WHERE leases.expires_at <= ?`, resource, holder, expires, formatTime(now))
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n == 1, nil
+}
+
+func (s *Store) RenewLease(resource, holder string, ttl time.Duration, now time.Time) (bool, error) {
+	now = now.UTC()
+	res, err := s.db.Exec(`UPDATE leases SET expires_at=? WHERE resource=? AND holder=? AND expires_at > ?`, formatTime(now.Add(ttl)), resource, holder, formatTime(now))
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n == 1, nil
+}
+
+func (s *Store) ReleaseLease(resource, holder string) (bool, error) {
+	res, err := s.db.Exec(`DELETE FROM leases WHERE resource=? AND holder=?`, resource, holder)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n == 1, nil
+}

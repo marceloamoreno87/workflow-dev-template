@@ -125,3 +125,62 @@ func TestLoadRebuildsStateAndReportsMissing(t *testing.T) {
 		t.Fatalf("unexpected work item: %#v", got)
 	}
 }
+
+func TestLeaseAcquireRenewRelease(t *testing.T) {
+	t.Parallel()
+
+	s, err := Open(filepath.Join(t.TempDir(), "journal.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Unix(100, 0).UTC()
+	ok, err := s.AcquireLease("repo#1", "exec-a", time.Minute, now)
+	if err != nil || !ok {
+		t.Fatalf("AcquireLease() = %v, %v; want true, nil", ok, err)
+	}
+	ok, err = s.AcquireLease("repo#1", "exec-b", time.Minute, now)
+	if err != nil || ok {
+		t.Fatalf("second AcquireLease() = %v, %v; want false, nil", ok, err)
+	}
+	ok, err = s.RenewLease("repo#1", "exec-b", time.Minute, now)
+	if err != nil || ok {
+		t.Fatalf("foreign RenewLease() = %v, %v; want false, nil", ok, err)
+	}
+	ok, err = s.RenewLease("repo#1", "exec-a", time.Minute, now)
+	if err != nil || !ok {
+		t.Fatalf("RenewLease() = %v, %v; want true, nil", ok, err)
+	}
+	ok, err = s.ReleaseLease("repo#1", "exec-b")
+	if err != nil || ok {
+		t.Fatalf("foreign ReleaseLease() = %v, %v; want false, nil", ok, err)
+	}
+	ok, err = s.ReleaseLease("repo#1", "exec-a")
+	if err != nil || !ok {
+		t.Fatalf("ReleaseLease() = %v, %v; want true, nil", ok, err)
+	}
+	ok, err = s.AcquireLease("repo#1", "exec-b", time.Minute, now)
+	if err != nil || !ok {
+		t.Fatalf("re-acquire = %v, %v; want true, nil", ok, err)
+	}
+}
+
+func TestExpiredLeaseIsReacquirable(t *testing.T) {
+	t.Parallel()
+
+	s, err := Open(filepath.Join(t.TempDir(), "journal.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Unix(200, 0).UTC()
+	if _, err := s.AcquireLease("repo#2", "exec-a", time.Minute, now); err != nil {
+		t.Fatal(err)
+	}
+	ok, err := s.AcquireLease("repo#2", "exec-b", time.Minute, now.Add(2*time.Minute))
+	if err != nil || !ok {
+		t.Fatalf("expired AcquireLease() = %v, %v; want true, nil", ok, err)
+	}
+}
