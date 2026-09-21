@@ -39,6 +39,10 @@ func ParseRegistry(data []byte) (Registry, error) {
 	return r, nil
 }
 
+func MarshalRegistry(r Registry) ([]byte, error) {
+	return yaml.Marshal(r)
+}
+
 func (r Registry) Validate() error {
 	ids := map[string]bool{}
 	paths := map[string]bool{}

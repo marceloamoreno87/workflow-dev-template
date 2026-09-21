@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/marceloamoreno87/workflow-dev-template/internal/registry"
 )
 
@@ -146,7 +144,7 @@ func runRegister(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "invalid:", err)
 		return 1
 	}
-	out, err := yaml.Marshal(reg)
+	out, err := registry.MarshalRegistry(reg)
 	if err != nil {
 		fmt.Fprintln(stderr, "invalid:", err)
 		return 1
