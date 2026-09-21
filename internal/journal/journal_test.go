@@ -3,6 +3,9 @@ package journal
 import (
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/marceloamoreno87/workflow-dev-template/internal/workflow"
 )
 
 func TestOpenCreatesSchema(t *testing.T) {
@@ -29,5 +32,40 @@ func TestOpenCreatesSchema(t *testing.T) {
 	}
 	if mode != "wal" {
 		t.Fatalf("journal_mode = %q, want wal", mode)
+	}
+}
+
+func TestApplyIsIdempotentByCommandID(t *testing.T) {
+	t.Parallel()
+
+	s, err := Open(filepath.Join(t.TempDir(), "journal.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	cmd := workflow.Command{ID: "c1", AggregateID: "repo#1", ExpectedVersion: 0, ActorID: "operator", Type: workflow.CommandSubmitWork}
+	first, err := s.Apply(time.Unix(1, 0).UTC(), cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first) != 1 || first[0].Version != 1 {
+		t.Fatalf("unexpected first events: %#v", first)
+	}
+
+	second, err := s.Apply(time.Unix(2, 0).UTC(), cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(second) != 1 || second[0].Version != 1 || second[0].CommandID != "c1" {
+		t.Fatalf("unexpected replayed events: %#v", second)
+	}
+
+	count := 0
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM events WHERE aggregate_id='repo#1'`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("event count = %d, want 1", count)
 	}
 }

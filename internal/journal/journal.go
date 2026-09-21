@@ -3,7 +3,10 @@ package journal
 
 import (
 	"database/sql"
+	"errors"
+	"time"
 
+	"github.com/marceloamoreno87/workflow-dev-template/internal/workflow"
 	_ "modernc.org/sqlite"
 )
 
@@ -61,4 +64,112 @@ func Open(path string) (*Store, error) {
 
 func (s *Store) Close() error {
 	return s.db.Close()
+}
+
+var ErrConflict = errors.New("stale expected version")
+
+func formatTime(t time.Time) string {
+	return t.UTC().Format(time.RFC3339Nano)
+}
+
+func parseTime(s string) (time.Time, error) {
+	return time.Parse(time.RFC3339Nano, s)
+}
+
+func (s *Store) Apply(now time.Time, cmd workflow.Command) ([]workflow.Event, error) {
+	now = now.UTC()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var commandID, aggregateID, actorID, commandType, reason, receivedAt string
+	var expectedVersion uint64
+	err = tx.QueryRow(`SELECT command_id, aggregate_id, expected_version, actor_id, type, reason, received_at FROM commands WHERE command_id=?`, string(cmd.ID)).Scan(&commandID, &aggregateID, &expectedVersion, &actorID, &commandType, &reason, &receivedAt)
+	if err == nil {
+		rows, err := tx.Query(`SELECT aggregate_id, version, command_id, actor_id, type, from_state, to_state, reason, at FROM events WHERE command_id=? ORDER BY version`, string(cmd.ID))
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		events, err := scanEvents(rows)
+		if err != nil {
+			return nil, err
+		}
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+		return events, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	current, err := loadWorkItemTx(tx, cmd.AggregateID)
+	if err != nil {
+		return nil, err
+	}
+	if cmd.ExpectedVersion != current.Version {
+		return nil, ErrConflict
+	}
+	events, err := (workflow.Workflow{}).Handle(now, current, cmd)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(`INSERT INTO commands(command_id, aggregate_id, expected_version, actor_id, type, reason, received_at) VALUES(?,?,?,?,?,?,?)`, string(cmd.ID), string(cmd.AggregateID), uint64(cmd.ExpectedVersion), string(cmd.ActorID), string(cmd.Type), cmd.Reason, formatTime(now)); err != nil {
+		return nil, err
+	}
+	for _, e := range events {
+		if _, err := tx.Exec(`INSERT INTO events(aggregate_id, version, command_id, actor_id, type, from_state, to_state, reason, at) VALUES(?,?,?,?,?,?,?,?,?)`, string(e.AggregateID), uint64(e.Version), string(e.CommandID), string(e.ActorID), string(e.Type), string(e.From), string(e.To), e.Reason, formatTime(e.At)); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func scanEvents(rows *sql.Rows) ([]workflow.Event, error) {
+	var out []workflow.Event
+	for rows.Next() {
+		var aggregateID, commandID, actorID, eventType, fromState, toState, reason, at string
+		var version uint64
+		if err := rows.Scan(&aggregateID, &version, &commandID, &actorID, &eventType, &fromState, &toState, &reason, &at); err != nil {
+			return nil, err
+		}
+		parsed, err := parseTime(at)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, workflow.Event{
+			AggregateID: workflow.WorkItemID(aggregateID),
+			Version:     workflow.Version(version),
+			CommandID:   workflow.CommandID(commandID),
+			ActorID:     workflow.ActorID(actorID),
+			Type:        workflow.EventType(eventType),
+			From:        workflow.State(fromState),
+			To:          workflow.State(toState),
+			Reason:      reason,
+			At:          parsed,
+		})
+	}
+	return out, rows.Err()
+}
+
+func loadWorkItemTx(tx *sql.Tx, id workflow.WorkItemID) (workflow.WorkItem, error) {
+	rows, err := tx.Query(`SELECT aggregate_id, version, command_id, actor_id, type, from_state, to_state, reason, at FROM events WHERE aggregate_id=? ORDER BY version`, string(id))
+	if err != nil {
+		return workflow.WorkItem{}, err
+	}
+	defer rows.Close()
+	events, err := scanEvents(rows)
+	if err != nil {
+		return workflow.WorkItem{}, err
+	}
+	if len(events) == 0 {
+		return workflow.WorkItem{}, nil
+	}
+	return workflow.Fold(events)
 }
