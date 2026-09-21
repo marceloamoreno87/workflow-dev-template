@@ -29,6 +29,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 
 - [Increment 1: Workflow core](./superpowers/plans/2026-09-20-workflow-core.md)
 - [Increment 2: Operational journal](./superpowers/plans/2026-09-21-operational-journal.md)
+- [Increment 3: CLI and registry](./superpowers/plans/2026-09-21-cli-registry.md)
 
 ## Increment 1 verification
 
