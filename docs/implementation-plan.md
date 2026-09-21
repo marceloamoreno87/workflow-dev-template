@@ -29,4 +29,14 @@ The release is complete only when a Go fixture Project passes the full scenario 
 
 - [Increment 1: Workflow core](./superpowers/plans/2026-09-20-workflow-core.md)
 
+## Increment 1 verification
+
+Verified 2026-09-21 in the `feat/workflow-core` Project Worktree with Go 1.27.1.
+Commands deterministically produce Events and Work Item State rebuilds only by folding Events.
+
+- [x] `go test ./internal/workflow -run TestHappyPathReplay -count=1` — PASS (Gatekeeper + Workflow happy path SubmitWork through CompleteRollout ends in `done`, Version equals Event count, replay identical)
+- [x] `go test ./internal/workflow -run '^$' -fuzz FuzzFoldNeverReturnsInvalidState -fuzztime 10s` — PASS (~9.6M execs, no panic, no failing corpus entry)
+- [x] `go test -race ./...` — PASS (317 specs, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
