@@ -40,4 +40,13 @@ Commands deterministically produce Events and Work Item State rebuilds only by f
 - [x] `go test -race ./...` — PASS (317 specs, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 
+## Increment 2 verification
+
+Verified 2026-09-21 in the `feat/operational-journal` Project Worktree with Go 1.27.1.
+Persisted Events rebuild identical Work Item State after close/reopen and stale Commands never mutate State.
+
+- [x] `go test ./internal/journal -run TestRestartRecoversHappyPath -count=1` — PASS (Gatekeeper + Apply loop SubmitWork through CompleteRollout ends in `done`, Version equals Command count, reopened Load identical, stale Apply errors without mutation)
+- [x] `go test -race ./...` — PASS (324 specs, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
