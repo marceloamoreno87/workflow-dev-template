@@ -30,6 +30,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 1: Workflow core](./superpowers/plans/2026-09-20-workflow-core.md)
 - [Increment 2: Operational journal](./superpowers/plans/2026-09-21-operational-journal.md)
 - [Increment 3: CLI and registry](./superpowers/plans/2026-09-21-cli-registry.md)
+- [Increment 4: GitHub intake](./superpowers/plans/2026-09-22-github-intake.md)
 
 ## Increment 1 verification
 
@@ -57,6 +58,16 @@ Register then validate then list agree on one fixture Project and escaping paths
 
 - [x] `go test ./internal/cli -run TestRegister -count=1` — PASS (register→manifest+gitmodules fixture→validate lists OK demo, list agrees, escape rejected without persisting)
 - [x] `go test -race ./...` — PASS (351 passed in 6 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 4 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Open Issues submit new Work Items and Project status advances them one step; closed Issues record intent without mutating State and terminal items never resurrect by intake.
+
+- [x] `go test ./internal/github -run 'TestClosed|TestBlocked|TestTerminal|TestIntake' -count=1` — PASS (closed intent without commands, blocked never jumps, terminal never resurrects, stable command ids)
+- [x] `go test -race ./...` — PASS (375 passed in 7 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
