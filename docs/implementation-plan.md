@@ -37,6 +37,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 8: Role loop](./superpowers/plans/2026-09-22-role-loop.md)
 - [Increment 9: Pull request and release](./superpowers/plans/2026-09-22-pr-release.md)
 - [Increment 10: Coolify delivery](./superpowers/plans/2026-09-22-coolify-delivery.md)
+- [Increment 11: Controlled exposure](./superpowers/plans/2026-09-22-controlled-exposure.md)
 
 ## Increment 1 verification
 
@@ -137,6 +138,16 @@ Releases deploy through a typed Capability Broker with the Feature disabled, hea
 
 - [x] `go test ./internal/coolify -run 'TestDeliverFlow|TestOversized|TestDeadline|TestLiveBroker' -count=1` — PASS (deploy→red health→rollback flow, oversized rejection, deadline enforcement, live gate skips)
 - [x] `go test -race ./...` — PASS (527 passed in 13 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 11 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Features expose through validated declarations with deterministic offline evaluation (FNV-1a bucketing, kill switch always off), staged rollouts ending at 100, contributor-only acceptance (reject disables), and removal deadlines that become tracked debt after 14 days.
+
+- [x] `go test ./internal/flags -run 'TestExposureFlow|TestRejectedAcceptanceDisables' -count=1` — PASS (targeted→accept→rollout→debt flow, reject disables and stays off)
+- [x] `go test -race ./...` — PASS (546 passed in 14 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
