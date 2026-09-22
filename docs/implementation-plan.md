@@ -35,6 +35,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 6: Go Project Runner](./superpowers/plans/2026-09-22-go-runner.md)
 - [Increment 7: Codex integration](./superpowers/plans/2026-09-22-codex-integration.md)
 - [Increment 8: Role loop](./superpowers/plans/2026-09-22-role-loop.md)
+- [Increment 9: Pull request and release](./superpowers/plans/2026-09-22-pr-release.md)
 
 ## Increment 1 verification
 
@@ -115,6 +116,16 @@ Product → Implementer → Reviewer runs as a deterministic loop over explicit 
 
 - [x] `go test ./internal/loop -run 'TestHappyPathLoop|TestBlockedLoop' -count=1` — PASS (happy path ends done with cost 6, exhausted loop records reason and rejects further events)
 - [x] `go test -race ./...` — PASS (466 passed in 11 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 9 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Pull requests and releases are governed as pure policy: own Execution commits reorganize only before creation, third-party ranges never rewrite, merges require operator approval with green checks through history-preserving merge commits, releases are strict semver with digest-pinned artifacts, and every Gate leaves validated Evidence.
+
+- [x] `go test ./internal/delivery -run 'TestSeparateFactsFlow|TestMergeEvaluatesWithoutMutating' -count=1` — PASS (approval/merge/release stay separate facts, merge evaluates without mutating)
+- [x] `go test -race ./...` — PASS (505 passed in 12 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
