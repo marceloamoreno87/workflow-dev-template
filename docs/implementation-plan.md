@@ -210,4 +210,8 @@ Stack Adapters resolve by manifest name and render Quality Gates as exact host c
 
 All 16 module increments are implemented on `master` with executable evidence recorded above. The release acceptance scenario from the roadmap (external Issue through Triage, Spec, Codex implementation, containerized Gates, independent review, preserved commits, PR approval, immutable release, Coolify deploy, controlled client exposure, acceptance, rollout, scheduled flag removal, and OKF proposal — with restart recovery and no secret leakage) remains an operator-run end-to-end against real systems and is not claimed by module tests.
 
+## v2 plan index (organism)
+
+- [Harness Organism master plan](./superpowers/plans/2026-09-22-harness-organism.md) — daemon, role pipeline, narrow MCP, GitHub wiring, live human surfaces, v2 acceptance. Each increment gets its own executable TDD plan before implementation.
+
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
