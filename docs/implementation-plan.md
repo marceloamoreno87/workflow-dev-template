@@ -42,6 +42,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 13: Dashboard](./superpowers/plans/2026-09-22-dashboard.md)
 - [Increment 14: Knowledge](./superpowers/plans/2026-09-22-knowledge.md)
 - [Increment 15: Observability and evals](./superpowers/plans/2026-09-22-observability-evals.md)
+- [Increment 16: Additional stacks](./superpowers/plans/2026-09-22-additional-stacks.md)
 
 ## Increment 1 verification
 
@@ -194,5 +195,19 @@ Threads route through the 14-row documented baseline (Luna/Terra/Sol, `xhigh` fo
 - [x] `go test -race ./...` — PASS (628 passed in 18 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 16 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1, Python 3.14, and Node 26.
+Stack Adapters resolve by manifest name and render Quality Gates as exact host commands: `go-service` pins the Go baseline, `python-service` and `nextjs-web` declare their canonical gates, and every present toolchain executes a real fixture gate through the bounded runner with toolchain-absent skips elsewhere.
+
+- [x] `go test ./internal/stack -run 'TestAdapterFlow' -count=1 -v` — PASS (python `py_compile`, node fixture, gofmt gate, all real)
+- [x] `go test -race ./...` — PASS (651 passed in 19 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## v1 close-out note
+
+All 16 module increments are implemented on `master` with executable evidence recorded above. The release acceptance scenario from the roadmap (external Issue through Triage, Spec, Codex implementation, containerized Gates, independent review, preserved commits, PR approval, immutable release, Coolify deploy, controlled client exposure, acceptance, rollout, scheduled flag removal, and OKF proposal — with restart recovery and no secret leakage) remains an operator-run end-to-end against real systems and is not claimed by module tests.
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
