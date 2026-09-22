@@ -40,6 +40,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 11: Controlled exposure](./superpowers/plans/2026-09-22-controlled-exposure.md)
 - [Increment 12: Telegram](./superpowers/plans/2026-09-22-telegram.md)
 - [Increment 13: Dashboard](./superpowers/plans/2026-09-22-dashboard.md)
+- [Increment 14: Knowledge](./superpowers/plans/2026-09-22-knowledge.md)
 
 ## Increment 1 verification
 
@@ -170,6 +171,16 @@ The operator dashboard binds loopback only, renders sorted Work Item projections
 
 - [x] `go test ./internal/dashboard -run 'TestGuardedFlow' -count=1` — PASS (anonymous 401, authed 200 with CSP, same-origin approve 202, foreign origin 403)
 - [x] `go test -race ./...` — PASS (572 passed in 16 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 14 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Project knowledge lives as versioned OKF Concepts with YAML frontmatter, loads fail-closed from bundle directories, retrieves through a deterministic weighted index with snippets, and evolves only through sourced proposals with method-appropriate verification (+1 versions, human-gated deprecation).
+
+- [x] `go test ./internal/knowledge -run 'TestBundleLifecycle' -count=1` — PASS (disk→search→reject unverified/unsourced→apply→new terms searchable)
+- [x] `go test -race ./...` — PASS (600 passed in 17 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
