@@ -33,6 +33,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 4: GitHub intake](./superpowers/plans/2026-09-22-github-intake.md)
 - [Increment 5: Workspace isolation](./superpowers/plans/2026-09-22-workspace-isolation.md)
 - [Increment 6: Go Project Runner](./superpowers/plans/2026-09-22-go-runner.md)
+- [Increment 7: Codex integration](./superpowers/plans/2026-09-22-codex-integration.md)
 
 ## Increment 1 verification
 
@@ -93,5 +94,17 @@ Declared Tasks run in restricted containers with runner-owned flags only: digest
 - [x] `go test -race ./...` — PASS (419 passed in 9 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 7 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1 against codex-cli 0.155.0 flags.
+One Agent Thread runs through the real `codex exec` interface with validated envelopes: classification `confidential`/`restricted` never spawns, sandbox is always `workspace-write` on the fixture worktree, auth rides on `CODEX_HOME` with user config ignored, transcripts are capped and parsed, and the final message must match the embedded output schema. Model output stays inert data.
+
+- [x] `go test ./internal/codex -run 'TestTranscriptIsCapped|TestClassifiedSpecNeverSpawns|TestFixturePathIsGated' -count=1` — PASS (2500-event transcript capped at 2000 with flag, classified spec never reaches the binary, fixture path skips without gates)
+- [x] `go test -race ./...` — PASS (447 passed in 10 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+Live-model fixture run is operator-gated (external model cost is never spent by default): with local auth present, `HARNESS_CODEX_FIXTURE=1 HARNESS_CODEX_LIVE=1 go test ./internal/codex -run TestFixturePathIsGated -count=1 -v` exercises the Task 3 `Run` path against a fixture worktree.
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
