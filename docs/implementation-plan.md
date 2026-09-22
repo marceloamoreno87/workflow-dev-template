@@ -31,6 +31,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 2: Operational journal](./superpowers/plans/2026-09-21-operational-journal.md)
 - [Increment 3: CLI and registry](./superpowers/plans/2026-09-21-cli-registry.md)
 - [Increment 4: GitHub intake](./superpowers/plans/2026-09-22-github-intake.md)
+- [Increment 5: Workspace isolation](./superpowers/plans/2026-09-22-workspace-isolation.md)
 
 ## Increment 1 verification
 
@@ -68,6 +69,16 @@ Open Issues submit new Work Items and Project status advances them one step; clo
 
 - [x] `go test ./internal/github -run 'TestClosed|TestBlocked|TestTerminal|TestIntake' -count=1` — PASS (closed intent without commands, blocked never jumps, terminal never resurrects, stable command ids)
 - [x] `go test -race ./...` — PASS (375 passed in 7 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 5 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1 and git 2.53.0.
+Project Worktrees prepare detached at the submodule HEAD with generated Git configuration (empty hooks path, cleared credential helper, deny-by-default environment); local Execution commits never move the registered submodule reference and Close removes the worktree registration.
+
+- [x] `go test ./internal/workspace -run 'TestPrepareSanitizes|TestPreparedHooks' -count=1` — PASS (secret-bearing variables absent, hardening vars present, hooksPath enforced, no credential helper)
+- [x] `go test -race ./...` — PASS (390 passed in 8 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
