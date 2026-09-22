@@ -33,6 +33,11 @@ func TestValidateSpec(t *testing.T) {
 	if err := validSpec().Validate(); err != nil {
 		t.Fatal(err)
 	}
+	escalated := validSpec()
+	escalated.Effort = "xhigh"
+	if err := escalated.Validate(); err != nil {
+		t.Fatalf("xhigh must validate for escalations: %v", err)
+	}
 }
 
 func TestRejectBadSpecs(t *testing.T) {

@@ -52,7 +52,7 @@ func (s ThreadSpec) Validate() error {
 		return fmt.Errorf("%w: model", ErrThread)
 	}
 	switch s.Effort {
-	case "low", "medium", "high":
+	case "low", "medium", "high", "xhigh":
 	default:
 		return fmt.Errorf("%w: effort %q", ErrThread, s.Effort)
 	}
