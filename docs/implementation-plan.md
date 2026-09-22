@@ -34,6 +34,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 5: Workspace isolation](./superpowers/plans/2026-09-22-workspace-isolation.md)
 - [Increment 6: Go Project Runner](./superpowers/plans/2026-09-22-go-runner.md)
 - [Increment 7: Codex integration](./superpowers/plans/2026-09-22-codex-integration.md)
+- [Increment 8: Role loop](./superpowers/plans/2026-09-22-role-loop.md)
 
 ## Increment 1 verification
 
@@ -106,5 +107,15 @@ One Agent Thread runs through the real `codex exec` interface with validated env
 - [x] `go build ./...` — clean build of `cmd/harness`
 
 Live-model fixture run is operator-gated (external model cost is never spent by default): with local auth present, `HARNESS_CODEX_FIXTURE=1 HARNESS_CODEX_LIVE=1 go test ./internal/codex -run TestFixturePathIsGated -count=1 -v` exercises the Task 3 `Run` path against a fixture worktree.
+
+## Increment 8 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Product → Implementer → Reviewer runs as a deterministic loop over explicit events: complete Specs select only required Agent Roles, green Gates advance, approvals complete, and every blocking rule from the development loop holds (three fix cycles, repeated failure, policy conflict, scope expansion, budget breach, deadline expiry).
+
+- [x] `go test ./internal/loop -run 'TestHappyPathLoop|TestBlockedLoop' -count=1` — PASS (happy path ends done with cost 6, exhausted loop records reason and rejects further events)
+- [x] `go test -race ./...` — PASS (466 passed in 11 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
