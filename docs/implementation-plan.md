@@ -38,6 +38,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 9: Pull request and release](./superpowers/plans/2026-09-22-pr-release.md)
 - [Increment 10: Coolify delivery](./superpowers/plans/2026-09-22-coolify-delivery.md)
 - [Increment 11: Controlled exposure](./superpowers/plans/2026-09-22-controlled-exposure.md)
+- [Increment 12: Telegram](./superpowers/plans/2026-09-22-telegram.md)
 
 ## Increment 1 verification
 
@@ -148,6 +149,16 @@ Features expose through validated declarations with deterministic offline evalua
 
 - [x] `go test ./internal/flags -run 'TestExposureFlow|TestRejectedAcceptanceDisables' -count=1` — PASS (targeted→accept→rollout→debt flow, reject disables and stays off)
 - [x] `go test -race ./...` — PASS (546 passed in 14 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 12 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Telegram Commands authenticate by allowlisted user plus private chat with five-minute staleness rejection, parse into strict version-bound intents (`/approve|accept|changes|retry|cancel`, never deploy), and sensitive intents verify against one-time HMAC challenges bound to actor, gate, and version with constant-time comparison.
+
+- [x] `go test ./internal/telegram -run 'TestAuthenticatedSensitiveFlow|TestFlowRejectsEverythingElse' -count=1` — PASS (allowlisted approve verifies with challenge; stranger/stale/unknown/expired all rejected)
+- [x] `go test -race ./...` — PASS (565 passed in 15 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
