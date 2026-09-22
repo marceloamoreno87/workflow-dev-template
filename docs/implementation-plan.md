@@ -36,6 +36,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 7: Codex integration](./superpowers/plans/2026-09-22-codex-integration.md)
 - [Increment 8: Role loop](./superpowers/plans/2026-09-22-role-loop.md)
 - [Increment 9: Pull request and release](./superpowers/plans/2026-09-22-pr-release.md)
+- [Increment 10: Coolify delivery](./superpowers/plans/2026-09-22-coolify-delivery.md)
 
 ## Increment 1 verification
 
@@ -126,6 +127,16 @@ Pull requests and releases are governed as pure policy: own Execution commits re
 
 - [x] `go test ./internal/delivery -run 'TestSeparateFactsFlow|TestMergeEvaluatesWithoutMutating' -count=1` — PASS (approval/merge/release stay separate facts, merge evaluates without mutating)
 - [x] `go test -race ./...` — PASS (505 passed in 12 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 10 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1 against `httptest` stub servers.
+Releases deploy through a typed Capability Broker with the Feature disabled, health arrives as structured evidence, and rollback carries an auditable reason; credentials travel in one header and never surface in errors, responses are capped, and every call is deadline-bound.
+
+- [x] `go test ./internal/coolify -run 'TestDeliverFlow|TestOversized|TestDeadline|TestLiveBroker' -count=1` — PASS (deploy→red health→rollback flow, oversized rejection, deadline enforcement, live gate skips)
+- [x] `go test -race ./...` — PASS (527 passed in 13 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
