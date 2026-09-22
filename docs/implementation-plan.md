@@ -39,6 +39,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 10: Coolify delivery](./superpowers/plans/2026-09-22-coolify-delivery.md)
 - [Increment 11: Controlled exposure](./superpowers/plans/2026-09-22-controlled-exposure.md)
 - [Increment 12: Telegram](./superpowers/plans/2026-09-22-telegram.md)
+- [Increment 13: Dashboard](./superpowers/plans/2026-09-22-dashboard.md)
 
 ## Increment 1 verification
 
@@ -159,6 +160,16 @@ Telegram Commands authenticate by allowlisted user plus private chat with five-m
 
 - [x] `go test ./internal/telegram -run 'TestAuthenticatedSensitiveFlow|TestFlowRejectsEverythingElse' -count=1` — PASS (allowlisted approve verifies with challenge; stranger/stale/unknown/expired all rejected)
 - [x] `go test -race ./...` — PASS (565 passed in 15 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 13 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1 against `httptest` loopback servers.
+The operator dashboard binds loopback only, renders sorted Work Item projections through embedded templates with escaped content, and validates version-bound operator Commands (202 echo, never applied); bearer auth, same-origin mutation checks, and a strict CSP guard every route.
+
+- [x] `go test ./internal/dashboard -run 'TestGuardedFlow' -count=1` — PASS (anonymous 401, authed 200 with CSP, same-origin approve 202, foreign origin 403)
+- [x] `go test -race ./...` — PASS (572 passed in 16 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
