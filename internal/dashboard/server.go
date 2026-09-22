@@ -101,16 +101,7 @@ func (s *Server) withAuth(next http.Handler) http.Handler {
 	})
 }
 
-// Task 1 stubs: replaced by real views (Task 2) and intake (Task 3).
-func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func (s *Server) handleItem(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not found", http.StatusNotFound)
-}
-
+// Task 1 stub: replaced by real intake in Task 3.
 func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
