@@ -100,8 +100,3 @@ func (s *Server) withAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// Task 1 stub: replaced by real intake in Task 3.
-func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
