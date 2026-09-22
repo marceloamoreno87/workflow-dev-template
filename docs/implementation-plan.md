@@ -32,6 +32,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 3: CLI and registry](./superpowers/plans/2026-09-21-cli-registry.md)
 - [Increment 4: GitHub intake](./superpowers/plans/2026-09-22-github-intake.md)
 - [Increment 5: Workspace isolation](./superpowers/plans/2026-09-22-workspace-isolation.md)
+- [Increment 6: Go Project Runner](./superpowers/plans/2026-09-22-go-runner.md)
 
 ## Increment 1 verification
 
@@ -79,6 +80,17 @@ Project Worktrees prepare detached at the submodule HEAD with generated Git conf
 
 - [x] `go test ./internal/workspace -run 'TestPrepareSanitizes|TestPreparedHooks' -count=1` — PASS (secret-bearing variables absent, hardening vars present, hooksPath enforced, no credential helper)
 - [x] `go test -race ./...` — PASS (390 passed in 8 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 6 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1 and Docker 29.8.0.
+Declared Tasks run in restricted containers with runner-owned flags only: digest-pinned image, no shell, detached-equivalent hardening (`--network none`, numeric user, `cap-drop ALL`, `no-new-privileges`, pids limit, equal memory/swap, read-only rootfs, single worktree bind mount), bounded timeout with best-effort removal, capped output, and secrets never echoed in errors.
+
+- [x] `go test ./internal/runner -run 'TestRunTruncatesOutput|TestRunRealDocker' -count=1` — PASS (truncation flagged at 64 KiB cap, gate closed skips)
+- [x] `HARNESS_RUNNER_DOCKER=1 go test ./internal/runner -run 'TestRunRealDocker' -count=1` — PASS (digest-pinned `pgvector/pgvector` fixture runs `/bin/echo` for real, exit 0)
+- [x] `go test -race ./...` — PASS (419 passed in 9 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 

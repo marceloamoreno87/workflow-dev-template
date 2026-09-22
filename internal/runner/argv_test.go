@@ -26,7 +26,7 @@ func TestArgvIsExact(t *testing.T) {
 		"--memory", "512m", "--memory-swap", "512m",
 		"--cpus", "2",
 		"--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-		"--mount", "type=bind,src=/ws/.worktrees/demo,dst=/work,rw",
+		"--mount", "type=bind,src=/ws/.worktrees/demo,dst=/work",
 		"--workdir", "/work",
 		"--entrypoint", "/bin/echo",
 		"--env", "GOFLAGS=-count=1",

@@ -24,7 +24,7 @@ func Argv(t Task, name, cidfile string) ([]string, error) {
 		"--memory", t.Memory, "--memory-swap", t.Memory,
 		"--cpus", strconv.FormatFloat(t.CPUs, 'f', -1, 64),
 		"--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-		"--mount", "type=bind,src=" + t.Workdir + ",dst=/work,rw",
+		"--mount", "type=bind,src=" + t.Workdir + ",dst=/work",
 		"--workdir", "/work",
 		"--entrypoint", t.Command[0],
 	}
