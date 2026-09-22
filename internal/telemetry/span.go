@@ -13,7 +13,29 @@ import (
 
 const maxSpans = 4096
 
-var secretSubstrings = []string{"token", "secret", "password", "credentials", "private_key"}
+var secretParts = map[string]bool{
+	"token": true, "secret": true, "passwd": true, "password": true,
+	"credentials": true, "credential": true, "private": true, "key": true, "auth": true,
+}
+
+func secretKey(key string) bool {
+	var part strings.Builder
+	flush := func() bool {
+		hit := secretParts[strings.ToLower(part.String())]
+		part.Reset()
+		return hit
+	}
+	for _, r := range key {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			part.WriteRune(r)
+			continue
+		}
+		if flush() {
+			return true
+		}
+	}
+	return flush()
+}
 
 type Span struct {
 	TraceID    string
@@ -60,15 +82,7 @@ func redact(attrs map[string]string) map[string]string {
 	}
 	out := make(map[string]string, len(attrs))
 	for key, value := range attrs {
-		lower := strings.ToLower(key)
-		redacted := false
-		for _, secret := range secretSubstrings {
-			if strings.Contains(lower, secret) {
-				redacted = true
-				break
-			}
-		}
-		if redacted {
+		if secretKey(key) {
 			out[key] = "[redacted]"
 			continue
 		}

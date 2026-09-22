@@ -16,7 +16,7 @@ func TestRecordAndExport(t *testing.T) {
 	}
 	span.WorkItem = "owner/repo#1"
 	span.Finish(time.Now().Add(time.Minute))
-	span.Attrs = map[string]string{"model": "gpt-5.6-terra", "github_token": "s3cr3t"}
+	span.Attrs = map[string]string{"model": "gpt-5.6-terra", "github_token": "s3cr3t", "monkey": "banana"}
 	if err := rec.Record(span); err != nil {
 		t.Fatal(err)
 	}
@@ -30,6 +30,9 @@ func TestRecordAndExport(t *testing.T) {
 	}
 	if !strings.Contains(exported, "[redacted]") || !strings.Contains(exported, span.SpanID) {
 		t.Fatalf("redaction or identity missing:\n%s", exported)
+	}
+	if !strings.Contains(exported, `"monkey":"banana"`) {
+		t.Fatalf("innocent key wrongly redacted:\n%s", exported)
 	}
 }
 

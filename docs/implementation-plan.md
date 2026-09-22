@@ -41,6 +41,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 12: Telegram](./superpowers/plans/2026-09-22-telegram.md)
 - [Increment 13: Dashboard](./superpowers/plans/2026-09-22-dashboard.md)
 - [Increment 14: Knowledge](./superpowers/plans/2026-09-22-knowledge.md)
+- [Increment 15: Observability and evals](./superpowers/plans/2026-09-22-observability-evals.md)
 
 ## Increment 1 verification
 
@@ -181,6 +182,16 @@ Project knowledge lives as versioned OKF Concepts with YAML frontmatter, loads f
 
 - [x] `go test ./internal/knowledge -run 'TestBundleLifecycle' -count=1` — PASS (disk→search→reject unverified/unsourced→apply→new terms searchable)
 - [x] `go test -race ./...` — PASS (600 passed in 17 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean build of `cmd/harness`
+
+## Increment 15 verification
+
+Verified 2026-09-22 on `master` with Go 1.27.1.
+Threads route through the 14-row documented baseline (Luna/Terra/Sol, `xhigh` for escalation, classified content never routes), usage attributes cost per Work Item and model, spans record redacted and export as JSON lines, and the routing table is locked behind an executable eval.
+
+- [x] `go test ./internal/telemetry -run 'TestRoutingBaselineEval|TestObservabilityFlow' -count=1` — PASS (no baseline drift, route→span→attribute→export with secrets redacted)
+- [x] `go test -race ./...` — PASS (628 passed in 18 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean build of `cmd/harness`
 
