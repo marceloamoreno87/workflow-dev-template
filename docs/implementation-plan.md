@@ -217,6 +217,7 @@ All 16 module increments are implemented on `master` with executable evidence re
 - [Increment 17: Daemon skeleton](./superpowers/plans/2026-09-23-daemon-skeleton.md)
 - [Increment 18: Role execution pipeline](./superpowers/plans/2026-09-23-role-pipeline.md)
 - [Increment 19: Narrow MCP server](./superpowers/plans/2026-09-23-narrow-mcp.md)
+- [Increment 20: GitHub wiring](./superpowers/plans/2026-09-23-github-wiring.md)
 
 ## Increment 17 verification
 
@@ -261,5 +262,18 @@ diagnostic backend behind `cmd/harness-mcp` until daemon wiring lands.
 - [x] `go test -race ./...` — PASS (696 passed in 23 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean builds of `cmd/harness`, `cmd/harnessd`, and `cmd/harness-mcp`
+
+## Increment 20 verification
+
+Verified 2026-09-23 on `master` with Go 1.27.1 against GitHub-shaped doubles.
+Issues poll by cursor into intake items, PRs open and merge only through history
+preserving `merge` (anything else never reaches the server), releases validate
+semver+sha, commit lists expose foreign authors, 429s retry boundedly while 422s
+never retry, and the poller drives the daemon journal submit→triage end to end.
+
+- [x] `go test ./internal/daemon -run 'TestPollerDrivesDaemon|TestLiveGitHubIsGated' -count=1` — PASS (double issue becomes triaged work item; live gate skips)
+- [x] `go test -race ./...` — PASS (715 passed in 24 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean builds of all three binaries
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
