@@ -41,8 +41,8 @@ func (f *fakeBackend) RunGate(workItem, gate string) (GateResult, error) {
 		f.gates = map[string]bool{}
 	}
 	f.gates[gate] = true
-	if gate == "spam" {
-		return GateResult{Gate: gate, Output: strings.Repeat("spam-line\n", 10240)}, nil
+	if gate == "smoke" {
+		return GateResult{Gate: gate, Output: strings.Repeat("smoke-line\n", 10240)}, nil
 	}
 	return GateResult{Gate: gate, Output: "ok\n"}, nil
 }
