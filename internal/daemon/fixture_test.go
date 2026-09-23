@@ -90,6 +90,7 @@ func writeStub(t *testing.T, bin, name, script string) {
 const stubCodexScript = `#!/bin/sh
 stub_dir=$(dirname "$0")
 echo "$@" >> "$stub_dir/argv.log"
+env | sort > "$stub_dir/env-codex.txt"
 cat > "$stub_dir/stdin.txt"
 out=""
 prev=""
