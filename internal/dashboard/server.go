@@ -69,6 +69,11 @@ func (s *Server) Handler() http.Handler {
 	return s.withCSP(s.withAuth(s.mux))
 }
 
+// SetApply wires the command applier after construction (the daemon sets itself).
+func (s *Server) SetApply(apply ApplyFunc) {
+	s.apply = apply
+}
+
 func (s *Server) withCSP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", cspValue)

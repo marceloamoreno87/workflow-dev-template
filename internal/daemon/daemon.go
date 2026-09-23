@@ -82,6 +82,13 @@ func Open(cfg Config, source IntakeSource) (*Daemon, error) {
 		return nil, err
 	}
 	d.dash = dash
+	d.dash.SetApply(func(req dashboard.CommandRequest) (dashboard.Applied, error) {
+		version, err := d.ApplyOperatorCommand(req)
+		if err != nil {
+			return dashboard.Applied{}, err
+		}
+		return dashboard.Applied{Version: version}, nil
+	})
 	d.feedDashboard()
 	return d, nil
 }
