@@ -1,0 +1,15 @@
+[Unit]
+Description=Harness daemon
+After=network-online.target
+
+[Service]
+# Template: prefer `harnessd --install-service --config <path>`, which renders this
+# unit with concrete paths. Do not run the daemon outside user scope.
+Type=simple
+ExecStart=/usr/local/bin/harnessd --config /home/operator/.harness/daemon.yaml
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
