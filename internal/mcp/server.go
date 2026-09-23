@@ -107,9 +107,9 @@ func notWired(name string) func(s *Server, args map[string]any) (any, *rpcError)
 func NewServer(token, workItem string, backend Backend) *Server {
 	s := &Server{tokenHash: sha256.Sum256([]byte(token)), workItem: workItem, backend: backend}
 	s.tools = []tool{
-		{name: "read_work", description: "Read the bound work item state.", schema: schemaFor("workItem"), call: notWired("read_work")},
-		{name: "get_spec", description: "Fetch the spec for the bound work item.", schema: schemaFor("workItem"), call: notWired("get_spec")},
-		{name: "search_knowledge", description: "Search project knowledge.", schema: searchSchema(), call: notWired("search_knowledge")},
+		{name: "read_work", description: "Read the bound work item state.", schema: schemaFor("workItem"), call: callReadWork},
+		{name: "get_spec", description: "Fetch the spec for the bound work item.", schema: schemaFor("workItem"), call: callGetSpec},
+		{name: "search_knowledge", description: "Search project knowledge.", schema: searchSchema(), call: callSearchKnowledge},
 		{name: "run_gate", description: "Run one declared gate for the bound work item.", schema: schemaFor("workItem", "gate"), call: notWired("run_gate")},
 		{name: "request_gate", description: "Request a human gate decision.", schema: schemaFor("workItem", "kind", "reason"), call: notWired("request_gate")},
 		{name: "propose_knowledge", description: "Stage a knowledge proposal.", schema: schemaFor("conceptId", "title", "body", "sources", "reason"), call: notWired("propose_knowledge")},
