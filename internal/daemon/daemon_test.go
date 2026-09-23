@@ -1,12 +1,17 @@
 package daemon
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/marceloamoreno87/workflow-dev-template/internal/workflow"
 )
+
+func ctx() context.Context {
+	return context.Background()
+}
 
 type fakeSource struct {
 	items []IntakeItem
@@ -32,7 +37,7 @@ func testConfig(root string) Config {
 	}
 }
 
-func TestTickSubmitsUnknownItems(t *testing.T) {
+func TestTickSubmitsAndTriages(t *testing.T) {
 	root := t.TempDir()
 	d, err := Open(testConfig(root), &fakeSource{items: []IntakeItem{
 		{ID: "owner/repo#1", Title: "First"},
@@ -44,7 +49,7 @@ func TestTickSubmitsUnknownItems(t *testing.T) {
 	t.Cleanup(func() { _ = d.Close() })
 
 	now := time.Now()
-	didWork, err := d.Tick(now)
+	didWork, err := d.Tick(ctx(), now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,10 +60,10 @@ func TestTickSubmitsUnknownItems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if item.State != workflow.StateInbox || item.Version != 1 {
+	if item.State != workflow.StateTriage || item.Version != 2 {
 		t.Fatalf("unexpected state: %#v", item)
 	}
-	again, err := d.Tick(now.Add(time.Second))
+	again, err := d.Tick(ctx(), now.Add(time.Second))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,14 +74,14 @@ func TestTickSubmitsUnknownItems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stable.Version != 1 {
+	if stable.Version != 2 {
 		t.Fatalf("duplicate submit: %#v", stable)
 	}
 }
 
-func TestTickSkipsJournaledItems(t *testing.T) {
+func TestTickPicksUpSeededItems(t *testing.T) {
 	root := t.TempDir()
-	d, err := Open(testConfig(root), &fakeSource{})
+	d, err := Open(testConfig(root), &fakeSource{items: []IntakeItem{{ID: "owner/repo#9"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,12 +101,19 @@ func TestTickSkipsJournaledItems(t *testing.T) {
 		t.Fatalf("seed failed: %#v", seeded)
 	}
 
-	didWork, err := d.Tick(time.Now())
+	didWork, err := d.Tick(ctx(), time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if didWork {
-		t.Fatal("empty source must not report work")
+	if !didWork {
+		t.Fatal("reported journaled item should advance to triage, not resubmit")
+	}
+	advanced, err := d.Journal().Load("owner/repo#9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if advanced.State != workflow.StateTriage || advanced.Version != 2 {
+		t.Fatalf("seeded item not triaged exactly once: %#v", advanced)
 	}
 }
 
@@ -113,11 +125,11 @@ func TestTickFeedsDashboard(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = d.Close() })
 
-	if _, err := d.Tick(time.Now()); err != nil {
+	if _, err := d.Tick(ctx(), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	rows := d.Dashboard().Items().List()
-	if len(rows) != 1 || rows[0].ID != "owner/repo#9" || rows[0].State != workflow.StateInbox {
+	if len(rows) != 1 || rows[0].ID != "owner/repo#9" || rows[0].State != workflow.StateTriage {
 		t.Fatalf("dashboard not fed: %#v", rows)
 	}
 }
@@ -128,26 +140,47 @@ func TestRestartRecoversCursor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Tick(time.Now()); err != nil {
+	if _, err := d.Tick(ctx(), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if err := d.Close(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := Open(testConfig(root), &fakeSource{})
+	reopened, err := Open(testConfig(root), &fakeSource{items: []IntakeItem{{ID: "owner/repo#2"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = reopened.Close() })
 
-	didWork, err := reopened.Tick(time.Now())
+	didWork, err := reopened.Tick(ctx(), time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if didWork {
-		t.Fatal("reopened daemon must not resubmit known items")
+	if !didWork {
+		t.Fatal("reopened daemon should process the new item")
 	}
-	if rows := reopened.Dashboard().Items().List(); len(rows) != 1 {
+	resumed, err := reopened.Journal().Load("owner/repo#1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resumed.State != workflow.StateTriage || resumed.Version != 2 {
+		t.Fatalf("known item resubmitted after restart: %#v", resumed)
+	}
+	fresh, err := reopened.Journal().Load("owner/repo#2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fresh.State != workflow.StateTriage {
+		t.Fatalf("new item not processed after restart: %#v", fresh)
+	}
+	quiet, err := reopened.Tick(ctx(), time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if quiet {
+		t.Fatal("triaged item must wait for the human gate")
+	}
+	if rows := reopened.Dashboard().Items().List(); len(rows) != 2 {
 		t.Fatalf("dashboard not refed after restart: %#v", rows)
 	}
 }
@@ -160,7 +193,7 @@ func TestTickPropagatesSourceErrors(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = d.Close() })
 
-	if _, err := d.Tick(time.Now()); err == nil {
+	if _, err := d.Tick(ctx(), time.Now()); err == nil {
 		t.Fatal("expected source error, got none")
 	}
 }

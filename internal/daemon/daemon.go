@@ -2,6 +2,7 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -149,7 +150,7 @@ func (d *Daemon) feedDashboard() {
 	}
 }
 
-func (d *Daemon) Tick(now time.Time) (bool, error) {
+func (d *Daemon) Tick(ctx context.Context, now time.Time) (bool, error) {
 	items, err := d.source.Poll(d.lastPoll, 100)
 	if err != nil {
 		return false, err
@@ -196,6 +197,14 @@ func (d *Daemon) Tick(now time.Time) (bool, error) {
 		return false, err
 	}
 	d.lastPoll = now
+	for _, id := range sortedIDs(d.known) {
+		worked, err := d.advanceItem(ctx, id, now)
+		didWork = didWork || worked
+		if err != nil {
+			d.feedDashboard()
+			return didWork, err
+		}
+	}
 	d.feedDashboard()
 	return didWork, nil
 }

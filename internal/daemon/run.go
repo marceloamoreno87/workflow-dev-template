@@ -34,7 +34,7 @@ func Serve(ctx context.Context, cfg Config, source IntakeSource, ready chan<- st
 	server := &http.Server{Handler: d.Dashboard().Handler(), ReadHeaderTimeout: 5 * time.Second}
 	go func() { _ = server.Serve(listener) }()
 
-	if _, err := d.Tick(time.Now()); err != nil {
+	if _, err := d.Tick(ctx, time.Now()); err != nil {
 		_ = server.Close()
 		return err
 	}
@@ -48,7 +48,7 @@ func Serve(ctx context.Context, cfg Config, source IntakeSource, ready chan<- st
 			_ = server.Shutdown(shutdown)
 			return nil
 		case now := <-ticker.C:
-			_, _ = d.Tick(now)
+			_, _ = d.Tick(ctx, now)
 		}
 	}
 }
