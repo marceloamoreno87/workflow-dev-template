@@ -219,6 +219,9 @@ func (d *Daemon) Tick(ctx context.Context, now time.Time) (bool, error) {
 			return didWork, err
 		}
 	}
+	// Telegram ingestion never fails the tick: a failed poll keeps its cursor
+	// and retries next tick; malformed updates skip individually inside.
+	_ = d.pollTelegram(ctx, now)
 	d.feedDashboard()
 	return didWork, nil
 }
