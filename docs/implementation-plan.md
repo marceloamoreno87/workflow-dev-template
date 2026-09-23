@@ -215,6 +215,7 @@ All 16 module increments are implemented on `master` with executable evidence re
 
 - [Harness Organism master plan](./superpowers/plans/2026-09-22-harness-organism.md) — daemon, role pipeline, narrow MCP, GitHub wiring, live human surfaces, v2 acceptance. Each increment gets its own executable TDD plan before implementation.
 - [Increment 17: Daemon skeleton](./superpowers/plans/2026-09-23-daemon-skeleton.md)
+- [Increment 18: Role execution pipeline](./superpowers/plans/2026-09-23-role-pipeline.md)
 
 ## Increment 17 verification
 
@@ -227,6 +228,21 @@ shuts down gracefully with the journal closing cleanly.
 - [x] `go test ./internal/daemon -run 'TestSkeletonServesProjections' -count=1` — PASS (anonymous 401, authed 200, ticked projection served, clean shutdown)
 - [x] `go run ./cmd/harnessd --check-config --config <good>` — exit 0 (`ok`); broken schema — exit 1
 - [x] `go test -race ./...` — PASS (667 passed in 21 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean builds of `cmd/harness` and `cmd/harnessd`
+
+## Increment 18 verification
+
+Verified 2026-09-23 on `master` with Go 1.27.1, git 2.53.0, and stub codex/toolchains.
+One tick carries a Work Item through prepare → thread → host gates → evidence → loop
+advance: intake submits, automation triages, product feeds spec_ready, gates move both
+machines together, reviewer approval completes the loop without touching the workflow
+Human Gate, terminals close worktrees idempotently, and loop blocks mirror into
+workflow `blocked` carrying the loop reason — with loop records surviving restarts and
+zero duplicate commands.
+
+- [x] `go test ./internal/daemon -run 'TestHappyPathPipeline|TestLoopDoneIssuesNoWorkflowCommand|TestRepeatedGateFailureBlocks|TestRestartMidPipeline' -count=1` — PASS (reviewing+done with closed worktree, quiet finished loops, repeated failure mirrored, restart resumes without duplicates)
+- [x] `go test -race ./...` — PASS (685 passed in 21 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean builds of `cmd/harness` and `cmd/harnessd`
 

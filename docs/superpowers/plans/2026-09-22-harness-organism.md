@@ -19,7 +19,7 @@ flowchart LR
     Journal --> Brain[Loop driver]
     Brain --> Prep[Workspace prepare]
     Prep --> Thread[Codex thread]
-    Thread --> Gates[Runner gates]
+    Thread --> Gates[Host gates via stack]
     Gates --> Evidence[Evidence + journal]
     Evidence --> Brain
     Brain --> PR[Delivery + broker + flags]
@@ -77,14 +77,16 @@ the tick consumes a scripted `IntakeSource` interface fed by fakes in tests.
 ### 18. Role execution pipeline
 
 **Goal:** One tick can carry a Work Item through prepare → thread → gates → evidence →
-loop advance, end to end.
+loop advance, end to end. Gates run on host toolchains through `stack` (containerized
+`runner` gates plug in when the image catalog lands — no image mapping exists yet, and
+the pipeline decisions under test are identical either way).
 
 **Interfaces (new):**
 - `internal/daemon`: `ExecuteRole(ctx, item, role) (EvidenceBundle, error)` wiring
-  `workspace.Prepare` → `telemetry.Select` → `codex.Run` → `runner.Run` (per stack gates)
-  → `delivery.Evidence` → `journal.Apply` → `loop.Advance`, with `workspace.Close` on
-  terminal states and `loop` fix-cycle accounting across ticks (Fixes persist in the
-  journal reason/projection, never in memory alone).
+  `workspace.Prepare` → `telemetry.Select` → `codex.Run` → `stack.Run` (per stack gates,
+  host toolchains) → `delivery.Evidence` → `journal.Apply` → `loop.Advance`, with
+  `workspace.Close` on terminal states and `loop` fix-cycle accounting persisted in
+  `daemon-loops.json` across ticks (never in memory alone).
 
 **Scope:** cost/duration metering into `telemetry` records per Execution; budget checks
 before spawning (loop already blocks over-budget, daemon must not spawn past it);

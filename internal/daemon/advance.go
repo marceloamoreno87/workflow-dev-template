@@ -146,7 +146,7 @@ func (d *Daemon) advanceItem(ctx context.Context, id workflow.WorkItemID, now ti
 		if err != nil {
 			return worked, err
 		}
-		return true, nil
+		return worked, nil
 	default:
 		return false, nil
 	}
