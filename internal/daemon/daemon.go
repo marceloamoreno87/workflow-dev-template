@@ -24,14 +24,16 @@ type IntakeItem struct {
 }
 
 type IntakeSource interface {
-	Poll(since time.Time, limit int) ([]IntakeItem, error)
+	Poll(ctx context.Context, since time.Time, limit int) ([]IntakeItem, error)
 }
 
 type emptySource struct{}
 
 func EmptySource() IntakeSource { return emptySource{} }
 
-func (emptySource) Poll(time.Time, int) ([]IntakeItem, error) { return nil, nil }
+func (emptySource) Poll(context.Context, time.Time, int) ([]IntakeItem, error) {
+	return nil, nil
+}
 
 const knownFileName = "daemon-known.json"
 
@@ -151,7 +153,7 @@ func (d *Daemon) feedDashboard() {
 }
 
 func (d *Daemon) Tick(ctx context.Context, now time.Time) (bool, error) {
-	items, err := d.source.Poll(d.lastPoll, 100)
+	items, err := d.source.Poll(ctx, d.lastPoll, 100)
 	if err != nil {
 		return false, err
 	}

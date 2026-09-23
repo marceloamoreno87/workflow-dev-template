@@ -18,7 +18,7 @@ type fakeSource struct {
 	err   error
 }
 
-func (f *fakeSource) Poll(since time.Time, limit int) ([]IntakeItem, error) {
+func (f *fakeSource) Poll(context.Context, time.Time, int) ([]IntakeItem, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
