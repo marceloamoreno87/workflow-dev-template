@@ -2,7 +2,7 @@
 
 Workflow Harness is a private, local-first development workspace for coordinating GitHub work, Codex Agent Roles, isolated Project execution, quality gates, delivery through Coolify, and durable project knowledge.
 
-The repository ships the Go runtime module by module: Workflow core, operational journal, CLI and registry, GitHub intake, workspace isolation, containerized Project Runner, Codex threads, the Product → Implementer → Reviewer loop, PR and release policy, the Coolify broker, flag exposure, Telegram commands, the loopback dashboard, OKF knowledge, telemetry with routing evals, and the `go-service`, `python-service`, and `nextjs-web` Stack Adapters. The `harness` CLI (`cmd/harness`) currently registers, validates, and lists Projects.
+The repository ships the Go runtime module by module: Workflow core, operational journal, CLI and registry, GitHub intake, workspace isolation, containerized Project Runner, Codex threads, the Product → Implementer → Reviewer loop, PR and release policy, the Coolify broker, flag exposure, Telegram commands, the loopback dashboard, OKF knowledge, telemetry with routing evals, and the `go-service`, `python-service`, and `nextjs-web` Stack Adapters. The `harness` CLI (`cmd/harness`) currently registers, validates, and lists Projects. The `harnessd` daemon (`cmd/harnessd`) runs the organism: intake, role pipeline, guarded dashboard, Telegram ingestion, and the narrow MCP server (`cmd/harness-mcp`). The operator replay procedure lives in [the acceptance runbook](./docs/acceptance.md).
 
 ## Verification
 

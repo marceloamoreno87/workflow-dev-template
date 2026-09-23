@@ -219,6 +219,7 @@ All 16 module increments are implemented on `master` with executable evidence re
 - [Increment 19: Narrow MCP server](./superpowers/plans/2026-09-23-narrow-mcp.md)
 - [Increment 20: GitHub wiring](./superpowers/plans/2026-09-23-github-wiring.md)
 - [Increment 21: Human surfaces live](./superpowers/plans/2026-09-23-human-surfaces.md)
+- [Increment 22: v2 acceptance](./superpowers/plans/2026-09-23-v2-acceptance.md)
 
 ## Increment 17 verification
 
@@ -290,5 +291,32 @@ user unit.
 - [x] `go test -race ./...` — PASS (730 passed in 24 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean builds of all three binaries
+
+## Increment 22 verification
+
+Verified 2026-09-23 on `master` with Go 1.27.1, git 2.53.0, and stub codex/toolchains.
+The daemon-owned chain runs end to end across a restart — GitHub-shaped poller →
+intake → triage → human authorize → product → implement → host gates → review → loop
+done — with exact workflow versions at every stage and secret canaries asserted absent
+from the database, cursors, prompts, subprocess environments, dashboard bodies, and
+(therefore) every log derived from them. Replay procedure lives in
+[the acceptance runbook](./acceptance.md).
+
+- [x] `go test ./internal/daemon -run 'TestAcceptanceScenario' -count=1` — PASS (chain completes reviewing v5 + loop done; 4 canaries absent from 9 artifact classes)
+- [x] `go test -race ./...` — PASS (731 passed in 24 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean builds of all three binaries
+
+## v2 organism close-out note
+
+The daemon now runs unattended across ticks: it intakes (fake/GitHub-shaped source),
+triages, executes product/implementer/reviewer roles in isolated worktrees under
+routed models and declared gates, advances two synchronized state machines, mirrors
+blocks, closes terminals, serves guarded projections and command intake, ingests
+Telegram with challenges, and persists every cursor across restarts. Human Gates
+(authorize, approve, accept, deploy, rollback, policy) stay human by design — the
+daemon prepares everything and waits. Future work, in order: keyring-backed tokens,
+Projects v2 status sync, webhook ingestion, containerized gates via the image catalog,
+MCP daemon wiring, and promotion metrics beyond the routing baseline eval.
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
