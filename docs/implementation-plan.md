@@ -216,6 +216,7 @@ All 16 module increments are implemented on `master` with executable evidence re
 - [Harness Organism master plan](./superpowers/plans/2026-09-22-harness-organism.md) — daemon, role pipeline, narrow MCP, GitHub wiring, live human surfaces, v2 acceptance. Each increment gets its own executable TDD plan before implementation.
 - [Increment 17: Daemon skeleton](./superpowers/plans/2026-09-23-daemon-skeleton.md)
 - [Increment 18: Role execution pipeline](./superpowers/plans/2026-09-23-role-pipeline.md)
+- [Increment 19: Narrow MCP server](./superpowers/plans/2026-09-23-narrow-mcp.md)
 
 ## Increment 17 verification
 
@@ -245,5 +246,20 @@ zero duplicate commands.
 - [x] `go test -race ./...` — PASS (685 passed in 21 packages, zero failures, zero race reports)
 - [x] `go vet ./...` — exit 0, no findings
 - [x] `go build ./...` — clean builds of `cmd/harness` and `cmd/harnessd`
+
+## Increment 19 verification
+
+Verified 2026-09-23 on `master` with Go 1.27.1.
+Agent Threads reach the daemon through one stdio JSON-RPC server bound to a single
+Work Item and bearer token: exactly six tools (three reads, one declared-gate run,
+one human-gate request, one knowledge proposal), cross-item calls rejected before any
+backend touch, oversized input rejected, gate output capped, and a read-only
+diagnostic backend behind `cmd/harness-mcp` until daemon wiring lands.
+
+- [x] `go test ./internal/mcp -run 'TestFullSession|TestWrongTokenLearnsNothing' -count=1` — PASS (initialize→list→read→request→propose over one pipe with silent notification; wrong token returns data never and touches backend never)
+- [x] stdio probe: `harness-mcp --work-item …` answers initialize (bound item echoed) and lists 6 tools
+- [x] `go test -race ./...` — PASS (696 passed in 23 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean builds of `cmd/harness`, `cmd/harnessd`, and `cmd/harness-mcp`
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
