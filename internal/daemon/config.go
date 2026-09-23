@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,15 @@ type Config struct {
 	RequiredRoles []string
 	BudgetUSD     float64
 	MaxDuration   time.Duration
+	Telegram      *TelegramConfig
+}
+
+type TelegramConfig struct {
+	BaseURL         string
+	AllowedUsers    []int64
+	AllowedChats    []int64
+	BotToken        string
+	ChallengeSecret []byte
 }
 
 var defaultRoles = []string{"product", "implementer", "reviewer"}
@@ -80,6 +90,13 @@ func LoadConfig(path string) (Config, error) {
 		Roles         []string `yaml:"roles"`
 		BudgetUSD     *float64 `yaml:"budgetUSD"`
 		MaxDuration   string   `yaml:"maxDuration"`
+		Telegram      *struct {
+			BaseURL             string  `yaml:"baseURL"`
+			AllowedUsers        []int64 `yaml:"allowedUsers"`
+			AllowedChats        []int64 `yaml:"allowedChats"`
+			BotTokenFile        string  `yaml:"botTokenFile"`
+			ChallengeSecretFile string  `yaml:"challengeSecretFile"`
+		} `yaml:"telegram"`
 	}
 	decoder := yaml.NewDecoder(strings.NewReader(string(raw)))
 	decoder.KnownFields(true)
@@ -128,8 +145,70 @@ func LoadConfig(path string) (Config, error) {
 		}
 		cfg.MaxDuration = maxDuration
 	}
+	if doc.Telegram != nil {
+		telegram, err := loadTelegramConfig(filepath.Dir(path), doc.Telegram)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Telegram = telegram
+	}
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
+}
+
+func readSecretFile(dir, name, what string) ([]byte, error) {
+	if name == "" {
+		return nil, fmt.Errorf("%w: %s file required", ErrDaemon, what)
+	}
+	if !filepath.IsAbs(name) {
+		name = filepath.Join(dir, name)
+	}
+	raw, err := os.ReadFile(name)
+	if err != nil {
+		return nil, fmt.Errorf("%w: unreadable %s file", ErrDaemon, what)
+	}
+	return []byte(strings.TrimSpace(string(raw))), nil
+}
+
+func loadTelegramConfig(dir string, doc *struct {
+	BaseURL             string  `yaml:"baseURL"`
+	AllowedUsers        []int64 `yaml:"allowedUsers"`
+	AllowedChats        []int64 `yaml:"allowedChats"`
+	BotTokenFile        string  `yaml:"botTokenFile"`
+	ChallengeSecretFile string  `yaml:"challengeSecretFile"`
+},
+) (*TelegramConfig, error) {
+	u, err := url.Parse(doc.BaseURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return nil, fmt.Errorf("%w: telegram base url needs http(s) with host", ErrDaemon)
+	}
+	if u.User != nil {
+		return nil, fmt.Errorf("%w: credentials do not belong in urls", ErrDaemon)
+	}
+	if len(doc.AllowedUsers) == 0 || len(doc.AllowedChats) == 0 {
+		return nil, fmt.Errorf("%w: telegram needs allowed users and chats", ErrDaemon)
+	}
+	botToken, err := readSecretFile(dir, doc.BotTokenFile, "bot token")
+	if err != nil {
+		return nil, err
+	}
+	if len(botToken) == 0 {
+		return nil, fmt.Errorf("%w: bot token required", ErrDaemon)
+	}
+	secret, err := readSecretFile(dir, doc.ChallengeSecretFile, "challenge secret")
+	if err != nil {
+		return nil, err
+	}
+	if len(secret) < 16 {
+		return nil, fmt.Errorf("%w: challenge secret too short", ErrDaemon)
+	}
+	return &TelegramConfig{
+		BaseURL:         strings.TrimSuffix(u.Scheme+"://"+u.Host+u.Path, "/"),
+		AllowedUsers:    doc.AllowedUsers,
+		AllowedChats:    doc.AllowedChats,
+		BotToken:        string(botToken),
+		ChallengeSecret: secret,
+	}, nil
 }
