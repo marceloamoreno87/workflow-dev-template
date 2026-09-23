@@ -21,7 +21,15 @@ func (f *fakeSource) Poll(since time.Time, limit int) ([]IntakeItem, error) {
 }
 
 func testConfig(root string) Config {
-	return Config{WorkspaceRoot: root, PollInterval: 5 * time.Second, BindAddr: "127.0.0.1:0", Token: "operator-token-at-least-16"}
+	return Config{
+		WorkspaceRoot: root,
+		PollInterval:  5 * time.Second,
+		BindAddr:      "127.0.0.1:0",
+		Token:         "operator-token-at-least-16",
+		RequiredRoles: []string{"product", "implementer", "reviewer"},
+		BudgetUSD:     10,
+		MaxDuration:   2 * time.Hour,
+	}
 }
 
 func TestTickSubmitsUnknownItems(t *testing.T) {

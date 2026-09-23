@@ -43,6 +43,7 @@ type Daemon struct {
 	source   IntakeSource
 	lastPoll time.Time
 	known    map[workflow.WorkItemID]bool
+	loops    map[workflow.WorkItemID]LoopRecord
 }
 
 func harnessDir(root string) string {
@@ -63,8 +64,12 @@ func Open(cfg Config, source IntakeSource) (*Daemon, error) {
 	if err != nil {
 		return nil, err
 	}
-	d := &Daemon{cfg: cfg, db: db, source: source, known: map[workflow.WorkItemID]bool{}}
+	d := &Daemon{cfg: cfg, db: db, source: source, known: map[workflow.WorkItemID]bool{}, loops: map[workflow.WorkItemID]LoopRecord{}}
 	if err := d.loadKnown(); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+	if err := d.loadLoops(); err != nil {
 		_ = db.Close()
 		return nil, err
 	}
