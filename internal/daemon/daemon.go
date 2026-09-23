@@ -191,6 +191,11 @@ func (d *Daemon) Tick(ctx context.Context, now time.Time) (bool, error) {
 			return false, err
 		}
 		d.known[intake.ID] = true
+		if _, ok := d.loops[intake.ID]; !ok {
+			if err := d.saveLoop(intake.ID, LoopRecord{Title: strings.TrimSpace(intake.Title)}); err != nil {
+				return false, err
+			}
+		}
 		didWork = true
 	}
 	if err := d.persistKnown(); err != nil {
