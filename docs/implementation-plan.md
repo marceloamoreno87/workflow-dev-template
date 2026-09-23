@@ -43,6 +43,7 @@ The release is complete only when a Go fixture Project passes the full scenario 
 - [Increment 14: Knowledge](./superpowers/plans/2026-09-22-knowledge.md)
 - [Increment 15: Observability and evals](./superpowers/plans/2026-09-22-observability-evals.md)
 - [Increment 16: Additional stacks](./superpowers/plans/2026-09-22-additional-stacks.md)
+- [Increment 17: Daemon skeleton](./superpowers/plans/2026-09-23-daemon-skeleton.md)
 
 ## Increment 1 verification
 
@@ -213,5 +214,20 @@ All 16 module increments are implemented on `master` with executable evidence re
 ## v2 plan index (organism)
 
 - [Harness Organism master plan](./superpowers/plans/2026-09-22-harness-organism.md) — daemon, role pipeline, narrow MCP, GitHub wiring, live human surfaces, v2 acceptance. Each increment gets its own executable TDD plan before implementation.
+- [Increment 17: Daemon skeleton](./superpowers/plans/2026-09-23-daemon-skeleton.md)
+
+## Increment 17 verification
+
+Verified 2026-09-23 on `master` with Go 1.27.1.
+`harnessd` boots from strict YAML (no secrets in config, token via file), opens the
+journal, ticks intake into `submit_work` through the Gatekeeper exactly once per item,
+persists its known-item cursor, feeds real projections to the loopback dashboard, and
+shuts down gracefully with the journal closing cleanly.
+
+- [x] `go test ./internal/daemon -run 'TestSkeletonServesProjections' -count=1` — PASS (anonymous 401, authed 200, ticked projection served, clean shutdown)
+- [x] `go run ./cmd/harnessd --check-config --config <good>` — exit 0 (`ok`); broken schema — exit 1
+- [x] `go test -race ./...` — PASS (667 passed in 21 packages, zero failures, zero race reports)
+- [x] `go vet ./...` — exit 0, no findings
+- [x] `go build ./...` — clean builds of `cmd/harness` and `cmd/harnessd`
 
 Later plans are intentionally created after the preceding increment is verified. This avoids fixing database, integration, or adapter details before the domain interface has executable evidence.
