@@ -19,12 +19,14 @@ type Config struct {
 	BindAddr string
 	Token    string
 	Store    *Store
+	Apply    ApplyFunc
 }
 
 type Server struct {
 	tokenHash [32]byte
 	mux       *http.ServeMux
 	store     *Store
+	apply     ApplyFunc
 }
 
 func loopbackHost(addr string) (string, error) {
@@ -56,7 +58,7 @@ func NewServer(cfg Config) (*Server, error) {
 	if store == nil {
 		store = NewStore()
 	}
-	s := &Server{tokenHash: sha256.Sum256([]byte(cfg.Token)), mux: http.NewServeMux(), store: store}
+	s := &Server{tokenHash: sha256.Sum256([]byte(cfg.Token)), mux: http.NewServeMux(), store: store, apply: cfg.Apply}
 	s.mux.HandleFunc("GET /", s.handleIndex)
 	s.mux.HandleFunc("GET /items/{id}", s.handleItem)
 	s.mux.HandleFunc("POST /api/commands", s.handleCommand)

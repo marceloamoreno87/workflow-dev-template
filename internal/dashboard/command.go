@@ -3,6 +3,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,23 @@ import (
 
 	"github.com/marceloamoreno87/workflow-dev-template/internal/workflow"
 )
+
+var ErrApplyConflict = errors.New("stale command version")
+
+var ErrApplyRejected = errors.New("command rejected")
+
+type CommandRequest struct {
+	AggregateID     string
+	ExpectedVersion uint64
+	Type            workflow.CommandType
+	Reason          string
+}
+
+type Applied struct {
+	Version uint64
+}
+
+type ApplyFunc func(CommandRequest) (Applied, error)
 
 var intakeTypes = map[workflow.CommandType]bool{
 	workflow.CommandSubmitWork:            true,
@@ -75,8 +93,56 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "reason required", http.StatusUnprocessableEntity)
 		return
 	}
+	if s.apply == nil {
+		http.Error(w, "no applier wired", http.StatusNotImplemented)
+		return
+	}
+	applied, err := s.apply(CommandRequest{
+		AggregateID:     aggregate,
+		ExpectedVersion: doc.ExpectedVersion,
+		Type:            cmdType,
+		Reason:          doc.Reason,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrApplyConflict):
+			allowed := conflictAllowed(err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			fmt.Fprintf(w, `{"error":"stale version","allowed":%s}`+"\n", allowed)
+		case errors.Is(err, ErrApplyRejected):
+			http.Error(w, "command rejected", http.StatusUnprocessableEntity)
+		default:
+			http.Error(w, "apply failed", http.StatusInternalServerError)
+		}
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprintf(w, `{"aggregateId":%q,"expectedVersion":%d,"type":%q,"reason":%q,"actorId":"actor/operator","status":"accepted-for-review"}`+"\n",
-		aggregate, doc.ExpectedVersion, string(cmdType), doc.Reason)
+	fmt.Fprintf(w, `{"aggregateId":%q,"expectedVersion":%d,"type":%q,"reason":%q,"actorId":"actor/operator","version":%d,"status":"applied"}`+"\n",
+		aggregate, doc.ExpectedVersion, string(cmdType), doc.Reason, applied.Version)
+}
+
+// conflictAllowed renders the allowed-action list carried after the first ": "
+// of an ErrApplyConflict error as a JSON array. Daemon errors follow the
+// convention `stale version: a,b,c`; anything else yields [].
+func conflictAllowed(err error) string {
+	msg := err.Error()
+	if idx := strings.Index(msg, ": "); idx >= 0 {
+		msg = msg[idx+2:]
+	} else {
+		return "[]"
+	}
+	var out []string
+	for _, name := range strings.Split(msg, ",") {
+		name = strings.TrimSpace(name)
+		if name != "" {
+			out = append(out, name)
+		}
+	}
+	if len(out) == 0 {
+		return "[]"
+	}
+	raw, _ := json.Marshal(out)
+	return string(raw)
 }

@@ -29,12 +29,9 @@ func TestCommandIntake(t *testing.T) {
 		return res.StatusCode, doc
 	}
 
-	code, doc := post(`{"aggregateId":"owner/repo#123","expectedVersion":4,"type":"begin_triage","reason":""}`)
-	if code != http.StatusAccepted {
-		t.Fatalf("expected 202, got %d: %v", code, doc)
-	}
-	if doc["actorId"] != "actor/operator" || doc["aggregateId"] != "owner/repo#123" {
-		t.Fatalf("unexpected echo: %v", doc)
+	code, _ := post(`{"aggregateId":"owner/repo#123","expectedVersion":4,"type":"begin_triage","reason":""}`)
+	if code != http.StatusNotImplemented {
+		t.Fatalf("expected 501 without applier, got %d", code)
 	}
 	for _, body := range []string{
 		`{}`,

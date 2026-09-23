@@ -52,8 +52,8 @@ func TestGuardedFlow(t *testing.T) {
 		defer res.Body.Close()
 		return res.StatusCode
 	}
-	if got := post(`{"aggregateId":"owner/repo#123","expectedVersion":7,"type":"approve_pr","reason":""}`, "http://"+host); got != http.StatusAccepted {
-		t.Fatalf("same-origin approve: %d", got)
+	if got := post(`{"aggregateId":"owner/repo#123","expectedVersion":7,"type":"approve_pr","reason":""}`, "http://"+host); got != http.StatusNotImplemented {
+		t.Fatalf("same-origin approve without applier: %d", got)
 	}
 	if got := post(`{"aggregateId":"owner/repo#123","expectedVersion":7,"type":"approve_pr","reason":""}`, "http://evil.example"); got != http.StatusForbidden {
 		t.Fatalf("foreign origin: %d", got)
